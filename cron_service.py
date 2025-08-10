@@ -46,7 +46,7 @@ def send_newsletter():
             min_change_pct=3.0,    # Default change threshold  
             max_markets=10000,     # Allow all markets
             hours_back=168,        # 7 days (168 hours)
-            format_type="macro-outlook"
+            format_type="tech-outlook"
         )
         
         # Generate and email newsletter

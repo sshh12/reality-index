@@ -25,7 +25,26 @@
 
 - Run `black .` to format code (you may need to install in venv)
 
-### Useful Documentation
+### Documentation
 
 - `docs/openai-api.md`
 - `docs/polymarket.md`
+
+### README Guidelines
+
+When creating or updating README files for projects:
+
+- **Keep it high-level** - Focus on what the project does and how to run it, not implementation details
+- **Avoid specific file references** - Don't mention specific filenames, modules, or code structure
+- **Essential sections only**:
+  - Project description and what it does
+  - Quick start/setup instructions
+  - Basic usage examples
+  - Deployment instructions (Railway preferred)
+- **Exclude these sections**:
+  - Detailed feature lists
+  - Cost estimates
+  - Support/troubleshooting
+  - "How it works" technical breakdowns
+  - Specific configuration format details
+- **Be concise** - READMEs should be scannable and focused on getting users started quickly

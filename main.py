@@ -13,7 +13,7 @@ import argparse
 import sys
 import os
 from market_analyzer.newsletter_generator import MarketNewsletterGenerator
-from market_analyzer.openai_client import NEWSLETTER_FORMATS
+from market_analyzer.newsletter_formats import NEWSLETTER_FORMATS
 
 
 def main():
