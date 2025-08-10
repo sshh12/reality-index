@@ -1,10 +1,9 @@
-from typing import List, Dict, Tuple
-import pandas as pd
+from typing import List, Dict
 from datetime import datetime
 
 
 class MarketDataProcessor:
-    def __init__(self, min_volume: float = 10000, min_change_pct: float = 5.0, max_markets: int = 10):
+    def __init__(self, min_volume: float = 10000, min_change_pct: float = 5.0, max_markets: int = 10000):
         self.min_volume = min_volume
         self.min_change_pct = min_change_pct
         self.max_markets = max_markets

@@ -13,6 +13,7 @@ import argparse
 import sys
 import os
 from market_analyzer.newsletter_generator import MarketNewsletterGenerator
+from market_analyzer.openai_client import NEWSLETTER_FORMATS
 
 
 def main():
@@ -26,9 +27,13 @@ Examples:
     python main.py search "election"           # Search for specific markets
     python main.py config                      # Show current settings
     
-    # Custom thresholds
+    # Custom thresholds  
     python main.py generate --min-volume 50000 --min-change 10
     python main.py generate --hours 24 --max-markets 15
+    
+    # Different formats
+    python main.py generate --format concise-executive-brief
+    python main.py generate --format detailed-technical-letter
     
 Environment Variables:
     OPENAI_API_KEY       - Required for AI newsletter generation
@@ -46,12 +51,15 @@ Environment Variables:
                            help='Minimum market volume (default: 10000)')
     gen_parser.add_argument('--min-change', type=float, default=3.0,
                            help='Minimum price change %% (default: 3.0)')
-    gen_parser.add_argument('--max-markets', type=int, default=10,
-                           help='Maximum markets to include (default: 10)')
+    gen_parser.add_argument('--max-markets', type=int, default=10000,
+                           help='Maximum markets to include (default: 10000)')
     gen_parser.add_argument('--hours', type=int, default=24,
                            help='Hours of history to analyze (default: 24)')
     gen_parser.add_argument('--limit', type=int, 
                            help='Limit number of markets to fetch for testing')
+    gen_parser.add_argument('--format', type=str, default='detailed-technical-letter',
+                           choices=list(NEWSLETTER_FORMATS.keys()),
+                           help='Newsletter format (default: detailed-technical-letter)')
     
     # Summary command  
     sum_parser = subparsers.add_parser('summary', help='Show quick market summary')
@@ -95,10 +103,12 @@ Environment Variables:
                 min_change_pct=args.min_change,
                 max_markets=args.max_markets,
                 hours_back=args.hours,
-                market_limit=args.limit
+                market_limit=args.limit,
+                format_type=args.format
             )
             
             print(f"🚀 Generating newsletter with settings:")
+            print(f"   Format: {args.format}")
             print(f"   Min volume: ${args.min_volume:,.0f}")
             print(f"   Min change: {args.min_change}%")
             print(f"   Max markets: {args.max_markets}")

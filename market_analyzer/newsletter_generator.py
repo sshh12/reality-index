@@ -10,15 +10,17 @@ class MarketNewsletterGenerator:
     def __init__(self, 
                  min_volume: float = 10000,
                  min_change_pct: float = 5.0,
-                 max_markets: int = 10,
+                 max_markets: int = 10000,
                  hours_back: int = 24,
-                 market_limit: Optional[int] = None):
+                 market_limit: Optional[int] = None,
+                 format_type: str = "detailed-technical-letter"):
         
         self.polymarket = PolymarketClient()
         self.processor = MarketDataProcessor(min_volume, min_change_pct, max_markets)
         self.ai = NewsletterAI()
         self.hours_back = hours_back
         self.market_limit = market_limit
+        self.format_type = format_type
         
         # Create output directory if it doesn't exist
         self.output_dir = "newsletters"
@@ -43,7 +45,7 @@ class MarketNewsletterGenerator:
         
         # Step 3: Calculate price changes
         print("📊 Analyzing price movements...")
-        markets_with_changes = self.polymarket.calculate_price_changes(active_markets, self.hours_back)
+        markets_with_changes = self.polymarket.calculate_price_changes(active_markets)
         print(f"   {len(markets_with_changes)} markets have price data")
         
         if not markets_with_changes:
@@ -60,8 +62,8 @@ class MarketNewsletterGenerator:
             print("ℹ️  No significant market movements detected. Generating summary anyway...")
         
         # Step 5: Generate newsletter content
-        print("✍️  Generating newsletter with AI...")
-        newsletter_content = self.ai.generate_newsletter(newsletter_data)
+        print(f"✍️  Generating newsletter with AI ({self.format_type})...")
+        newsletter_content = self.ai.generate_newsletter(newsletter_data, self.format_type)
         
         # Step 6: Save to file
         if not output_file:
@@ -84,7 +86,7 @@ class MarketNewsletterGenerator:
         # Get and process data
         all_markets = self.polymarket.get_all_markets(self.market_limit)
         active_markets = self.polymarket.filter_active_markets(all_markets, self.processor.min_volume)
-        markets_with_changes = self.polymarket.calculate_price_changes(active_markets, self.hours_back)
+        markets_with_changes = self.polymarket.calculate_price_changes(active_markets)
         
         # Process data
         newsletter_data = self.processor.create_newsletter_data(markets_with_changes)

@@ -220,7 +220,7 @@ class PolymarketClient:
         print(f"   Active: {active_count}, Not closed: {not_closed_count}, Future end: {future_end_count}, Final: {len(filtered_markets)}")
         return filtered_markets
     
-    def calculate_price_changes(self, markets: List[Dict], hours_back: int = 14) -> List[Dict]:
+    def calculate_price_changes(self, markets: List[Dict]) -> List[Dict]:
         """Calculate price changes for markets over the specified time period"""
         markets_with_changes = []
         
@@ -229,9 +229,6 @@ class PolymarketClient:
             tokens = market.get("tokens", [])
             if len(tokens) != 2:
                 continue
-                
-            yes_token = tokens[0] if tokens[0]["outcome"] == "Yes" else tokens[1]
-            no_token = tokens[1] if tokens[0]["outcome"] == "Yes" else tokens[0]
             
             # For now, use price change data from the Gamma API if available
             current_yes_price = None
