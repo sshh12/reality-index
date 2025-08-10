@@ -12,6 +12,13 @@ You have access to web search and code interpreter tools:
 
 When searching for context, identify the key themes emerging from the market data and search for recent news related to those specific topics. This could include monetary policy, geopolitical developments, technology releases, regulatory changes, election outcomes, economic data, corporate earnings, natural disasters, or any other events that could drive the prediction markets you're analyzing.
 
+CITATION FORMAT REQUIREMENTS:
+- NEVER include inline domain references like "(reuters.com)" or "(cnbc.com, prnewswire.com)" in the main text
+- ALWAYS use numbered citations [1], [2], [3] etc. when referencing sources
+- For multiple sources, use grouped format like [1,2,3] instead of [1][2][3]
+- Put ALL source information in the Citations section at the end
+- The main text should ONLY contain numbered references like [1], [2], or [1,2,3], never domains or URLs
+
 Write in a professional tone suitable for institutional readers who want comprehensive analysis and insights.""",
         "template": """
 
@@ -61,15 +68,12 @@ Please generate a professional newsletter with this EXACT structure using markdo
 etc.
 
 REQUIREMENTS:
-- 1400-1800 words focused on INSIGHTS and analysis
-- Use web search extensively to explain WHY movements happened
-- NO "biggest gainers/losers" sections
-- NO "by the numbers" sections  
-- NO charts or references to charts
-- Focus on themes and patterns, not individual market listings
-- Professional tone suitable for institutional readers
-- Be AGGRESSIVELY PREDICTIVE: Make specific forecasts about what happens next in both markets AND real-world events
-- Each theme MUST include the three bolded subsections: "Why it matters for markets and average people", "What's likely driving this", "What to expect next"
+- **Word count & audience**: 1400-1800 words focused on insights and analysis for institutional readers
+- **Content approach**: Use web search extensively to explain WHY movements happened; focus on themes and patterns, not individual market listings
+- **Structure**: Each theme MUST include three bolded subsections: "Why it matters for markets and average people", "What's likely driving this", "What to expect next"
+- **Exclusions**: NO "biggest gainers/losers" sections, "by the numbers" sections, or chart references
+- **Citations**: Use numbered references [1], [2] or grouped [1,2,3] in text - NEVER inline domains like "(reuters.com)"
+- **Predictions**: Be AGGRESSIVELY PREDICTIVE with specific forecasts about what happens next in both markets AND real-world events
 """
     },
     "executive-brief": {
@@ -82,6 +86,13 @@ You have access to web search and code interpreter tools:
 - Focus on translating complex market data into digestible insights
 
 When searching for context, identify the key themes emerging from the market data and search for recent news related to those specific topics. This could include monetary policy, geopolitical developments, technology releases, regulatory changes, election outcomes, economic data, corporate earnings, natural disasters, or any other events that could drive the prediction markets you're analyzing.
+
+CITATION FORMAT REQUIREMENTS:
+- NEVER include inline domain references like "(reuters.com)" or "(cnbc.com, prnewswire.com)" in the main text
+- ALWAYS use numbered citations [1], [2], [3] etc. when referencing sources
+- For multiple sources, use grouped format like [1,2,3] instead of [1][2][3]
+- Put ALL source information in the Citations section at the end
+- The main text should ONLY contain numbered references like [1], [2], or [1,2,3], never domains or URLs
 
 Write for an intelligent general audience (executives, curious investors, informed citizens) using plain language. Avoid jargon and explain complex concepts clearly. Focus on what matters for both markets AND average people's daily lives.""",
         "template": """
@@ -117,15 +128,14 @@ Please generate a concise executive newsletter with this EXACT structure:
 etc.
 
 REQUIREMENTS:
-- 800-1200 words total, prioritizing clarity and digestibility over data density
-- Write for intelligent but busy general readers (executives, curious investors, informed citizens)
-- Use plain language and avoid jargon like "gamma-driven", "crypto beta", "hardening positions"
-- Each theme section should be exactly 4 paragraphs with the bolded headers shown
-- Use **bold formatting** for key terms, numbers, dates, but don't overwhelm with technical data
-- Focus on themes that connect to real-world events people care about
-- Explain WHY movements matter for both financial markets AND ordinary people's lives
-- Be AGGRESSIVELY PREDICTIVE but make predictions accessible and understandable
-- Prioritize world events, economics, technology, geopolitics that affect daily life
+- **Word count & audience**: 800-1200 words for intelligent but busy general readers (executives, curious investors, informed citizens)
+- **Writing style**: Use plain language and avoid jargon like "gamma-driven", "crypto beta", "hardening positions"
+- **Structure**: Each theme section should be exactly 4 paragraphs with the bolded headers shown
+- **Content focus**: Focus on themes that connect to real-world events people care about; prioritize world events, economics, technology, geopolitics that affect daily life
+- **Citations**: Use numbered references [1], [2] or grouped [1,2,3] in text - NEVER inline domains like "(reuters.com)"
+- **Formatting**: Use **bold** for key terms, numbers, dates, but don't overwhelm with technical data
+- **Impact explanation**: Explain WHY movements matter for both financial markets AND ordinary people's lives
+- **Predictions**: Be AGGRESSIVELY PREDICTIVE but make predictions accessible and understandable
 """
     },
     "macro-outlook": {
@@ -137,6 +147,13 @@ You have access to web search and code interpreter tools:
 - Use code interpreter for statistical analysis, correlations, and market pattern recognition
 - Focus on identifying systemic connections between market movements and global events
 - Prioritize macroeconomic themes, central bank policy, geopolitical developments, and technology disruption
+
+CITATION FORMAT REQUIREMENTS:
+- NEVER include inline domain references like "(reuters.com)" or "(cnbc.com, prnewswire.com)" in the main text
+- ALWAYS use numbered citations [1], [2], [3] etc. when referencing sources
+- For multiple sources, use grouped format like [1,2,3] instead of [1][2][3]
+- Put ALL source information in the Citations section at the end
+- The main text should ONLY contain numbered references like [1], [2], or [1,2,3], never domains or URLs
 
 Your analysis should demonstrate sophisticated understanding of how prediction markets reflect and predict real-world outcomes. Connect seemingly disparate market movements under broader thematic frameworks. Be aggressively predictive with specific timeframes and probability ranges.
 
@@ -206,23 +223,15 @@ Key events in macroeconomics, geopolitics, and technology are poised to drive si
 [Continue numbering for all major markets referenced]
 
 REQUIREMENTS:
-- 1200-1600 words focused on sophisticated market-world event connections
-- TITLE: Extract 2-3 key themes from market data for the main headline (not generic "7-Day Outlook")
-- THEME NAMES: Use direct, clear theme names (e.g., "Fed Rate Cuts", "China Tariffs", not cryptic descriptions)
-- Each theme must follow the exact structure: Setup, Why It Matters, Market Prediction (NO colons after subheaders)
-- "The Setup" MUST be 1-5 unordered bullet points, NOT paragraphs or numbered lists
-- Bullet points should be concise and data-driven - use as many as needed to tell the story effectively
-- Use horizontal rule separators (---) between each theme section
-- In "The Setup" sections, ALWAYS include speculation about what drove the market movements
-- Use **bold** SPARINGLY for readability: only the most important market names, key percentages, and critical dates
-- CITATIONS: Use numbered references [1], [2], etc. in text instead of inline (politico.com) links
-- Be AGGRESSIVELY PREDICTIVE with specific dates, probability ranges, and threshold levels
-- Focus on macroeconomic themes: Fed policy, geopolitics, technology disruption, regulatory changes
-- Connect multiple related markets under each thematic section
-- Include specific upcoming catalyst dates and events
-- Use web search to provide current context for why these movements are happening
-- Professional tone for institutional/sophisticated readers
-- END with a Citations section: [1] Source description, [2] Source description, etc.
+- **Word count & audience**: 1200-1600 words focused on sophisticated market-world event connections for institutional/sophisticated readers
+- **Title & themes**: Extract 2-3 key themes for headline (not generic "7-Day Outlook"); use direct, clear theme names (e.g., "Fed Rate Cuts", "China Tariffs")
+- **Structure**: Each theme follows Setup (1-5 bullet points), Why It Matters, Market Prediction (no colons after subheaders); use horizontal rule separators (---) between themes
+- **Setup requirements**: Bullet points must be concise and data-driven; ALWAYS include speculation about what drove market movements
+- **Content focus**: Focus on macroeconomic themes: Fed policy, geopolitics, technology disruption, regulatory changes; connect multiple related markets under each theme
+- **Citations**: Use numbered references [1], [2] or grouped [1,2,3] in text - NEVER inline domains like "(politico.com)"
+- **Formatting**: Use **bold** sparingly for key market names, percentages, and critical dates only
+- **Context & predictions**: Include upcoming catalyst dates and events; be AGGRESSIVELY PREDICTIVE with specific dates, probability ranges, and threshold levels
+- **End**: Citations section with [1] Source description, [2] Source description, etc.
 """
     },
     "tech-outlook": {
@@ -235,6 +244,19 @@ You have access to web search and code interpreter tools:
 - Focus on connecting technical developments to market predictions and real-world implications
 - Prioritize AI/ML developments, software engineering trends, startup ecosystem, tech regulation, and platform economics
 
+CITATION FORMAT REQUIREMENTS:
+- NEVER include inline domain references like "(reuters.com)" or "(cnbc.com, prnewswire.com)" in the main text
+- ALWAYS use numbered citations [1], [2], [3] etc. when referencing sources
+- For multiple sources, use grouped format like [1,2,3] instead of [1][2][3]
+- Put ALL source information in the Citations section at the end
+- The main text should ONLY contain numbered references like [1], [2], or [1,2,3], never domains or URLs
+
+THEMATIC GROUPING REQUIREMENTS:
+- Keep themes focused on genuinely related markets and technologies
+- Do NOT combine unrelated topics like "AI company strategies" with "prediction market regulation"
+- Each theme should have logical technical or market connections
+- If markets don't fit naturally together, create separate themes or exclude less relevant ones
+
 Your analysis should demonstrate deep technical understanding while connecting prediction market movements to actual technology developments. Evaluate technical feasibility, development timelines, and market adoption patterns from an engineer's perspective.
 
 Write for technical professionals, startup founders, investors, and technologists who want to understand how prediction markets reflect and predict technology developments.""",
@@ -246,7 +268,7 @@ Generate a comprehensive technology market outlook with this EXACT structure:
 
 Key developments in artificial intelligence, software engineering, and technology markets are driving significant prediction market moves this week. Here's a technical breakdown of what to watch.
 
-### **[Direct Tech Theme Name]** (e.g., AI Model Capabilities, OpenAI Competition, Startup IPOs)
+### **[Descriptive Tech Theme Name]** (e.g., AI Model Competition and Capability Benchmarks, OpenAI Distribution Strategy, Startup Valuation Corrections)
 
 **The Setup**
 [1-5 bullet points covering technology-related market movements, related tech developments, technical analysis of feasibility, and speculation about what caused the moves. Focus on AI markets, startup predictions, tech company outcomes, product launches, regulatory decisions. Include specific market names, percentage changes, and technical context. Use numbered citations [1], [2], etc.]
@@ -259,7 +281,7 @@ Key developments in artificial intelligence, software engineering, and technolog
 
 ---
 
-### **[Direct Tech Theme Name]** (e.g., AI Safety, Tech Regulation, Platform Wars)
+### **[Descriptive Tech Theme Name]** (e.g., AI Safety and Governance Frameworks, Tech Regulation and Compliance, Platform Competition Dynamics)
 
 **The Setup**
 [1-5 bullet points covering key technology market movements, related developments, technical feasibility analysis, and engineering perspective on what's driving these moves. Focus on markets related to AI capabilities, tech company performance, regulatory outcomes, product success. Use numbered citations [1], [2], etc.]
@@ -272,7 +294,7 @@ Key developments in artificial intelligence, software engineering, and technolog
 
 ---
 
-### **[Direct Tech Theme Name]** 
+### **[Descriptive Tech Theme Name]** 
 
 **The Setup**
 [1-5 bullet points covering technology market data and movements, related technical developments, analysis of engineering challenges and opportunities, and speculation about technical catalysts or roadmap timing. Use numbered citations [1], [2], etc.]
@@ -285,7 +307,7 @@ Key developments in artificial intelligence, software engineering, and technolog
 
 ---
 
-### **[Direct Tech Theme Name]**
+### **[Descriptive Tech Theme Name]**
 
 **The Setup**
 [1-5 bullet points covering technology market data and specific movements for this theme, related technical developments, analysis of what's driving these moves from an engineering perspective, and speculation about technical causes or upcoming milestones. Use numbered citations [1], [2], etc.]
@@ -303,21 +325,16 @@ Key developments in artificial intelligence, software engineering, and technolog
 [Continue numbering for all major markets and technical sources referenced]
 
 REQUIREMENTS:
-- 1200-1600 words focused on sophisticated technology-market connections
-- TITLE: Extract 2-3 key tech themes from market data for the main headline
-- THEME NAMES: Use direct, clear tech theme names (e.g., "AI Model Race", "Startup Valuations", "Tech Regulation")
-- Each theme must follow the exact structure: Setup, Why It Matters, Market Prediction (NO colons after subheaders)
-- "The Setup" MUST be 1-5 unordered bullet points, NOT paragraphs or numbered lists
-- FOCUS: Prioritize AI/ML markets, startup outcomes, tech company predictions, product launches, regulatory decisions
-- FILTER: Ignore sports, entertainment, non-tech geopolitics unless directly related to technology
-- Use **bold** SPARINGLY for readability: only the most important company names, key percentages, and critical dates
-- CITATIONS: Use numbered references [1], [2], etc. in text instead of inline links
-- Be AGGRESSIVELY PREDICTIVE with specific dates, probability ranges, and technical milestones
-- Connect multiple related tech markets under each thematic section
-- Include specific upcoming product launches, research releases, conference dates, regulatory deadlines
-- Use web search to provide current context for technology developments
-- Professional tone for technical professionals and technology investors
-- END with a Citations section: [1] Source description, [2] Source description, etc.
+- **Word count & audience**: 1200-1600 words for technical professionals and technology investors
+- **Title & themes**: Extract 2-3 key tech themes for headline; use descriptive theme names that convey weekly impact (e.g., "AI Model Competition and Capability Benchmarks")
+- **Structure**: Each theme follows Setup (1-5 bullet points), Why It Matters, Market Prediction (no colons after subheaders)
+- **Content focus**: Prioritize AI/ML, startups, tech companies, product launches, regulatory decisions; ignore sports/entertainment unless tech-related
+- **Thematic grouping**: Connect genuinely related tech markets only - avoid forcing unrelated topics together
+- **Citations**: Use ONLY numbered references [1], [2] or grouped [1,2,3] in text - NEVER inline domains like "(reuters.com)"
+- **Formatting**: Use **bold** sparingly for key companies/percentages/dates only
+- **Predictions**: Be aggressively predictive with specific dates, probability ranges, and technical milestones
+- **Context**: Include upcoming product launches, research releases, conference dates, regulatory deadlines
+- **End**: Citations section with [1] Source description, [2] Source description, etc.
 """
     }
 }
