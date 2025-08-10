@@ -32,12 +32,20 @@ Examples:
     python main.py generate --hours 24 --max-markets 15
     
     # Different formats
-    python main.py generate --format concise-executive-brief
-    python main.py generate --format detailed-technical-letter
+    python main.py generate --format executive-brief
+    python main.py generate --format institutional-analysis  
+    python main.py generate --format macro-outlook
+    
+    # Email newsletters
+    python main.py email --format macro-outlook
+    python main.py email --subject "Weekly Market Update" --limit 20
+    python main.py test-email                      # Test email configuration
     
 Environment Variables:
     OPENAI_API_KEY       - Required for AI newsletter generation
     POLYMARKET_SECRET_KEY - Optional, may be needed for some API calls
+    POSTMARK_API_KEY     - Required for email functionality
+    TO_EMAILS            - Comma-separated list of email addresses for newsletters
         """
     )
     
@@ -57,9 +65,27 @@ Environment Variables:
                            help='Hours of history to analyze (default: 24)')
     gen_parser.add_argument('--limit', type=int, 
                            help='Limit number of markets to fetch for testing')
-    gen_parser.add_argument('--format', type=str, default='detailed-technical-letter',
+    gen_parser.add_argument('--format', type=str, default='institutional-analysis',
                            choices=list(NEWSLETTER_FORMATS.keys()),
-                           help='Newsletter format (default: detailed-technical-letter)')
+                           help='Newsletter format (default: institutional-analysis)')
+    
+    # Email command
+    email_parser = subparsers.add_parser('email', help='Generate and email newsletter')
+    email_parser.add_argument('--output', '-o', type=str, help='Output filename')
+    email_parser.add_argument('--subject', '-s', type=str, help='Email subject line')
+    email_parser.add_argument('--min-volume', type=float, default=10000, 
+                             help='Minimum market volume (default: 10000)')
+    email_parser.add_argument('--min-change', type=float, default=3.0,
+                             help='Minimum price change %% (default: 3.0)')
+    email_parser.add_argument('--max-markets', type=int, default=10000,
+                             help='Maximum markets to include (default: 10000)')
+    email_parser.add_argument('--hours', type=int, default=24,
+                             help='Hours of history to analyze (default: 24)')
+    email_parser.add_argument('--limit', type=int, 
+                             help='Limit number of markets to fetch for testing')
+    email_parser.add_argument('--format', type=str, default='institutional-analysis',
+                             choices=list(NEWSLETTER_FORMATS.keys()),
+                             help='Newsletter format (default: institutional-analysis)')
     
     # Summary command  
     sum_parser = subparsers.add_parser('summary', help='Show quick market summary')
@@ -81,6 +107,10 @@ Environment Variables:
     # Config command
     config_parser = subparsers.add_parser('config', help='Show current configuration')
     
+    # Test email command
+    test_email_parser = subparsers.add_parser('test-email', help='Send test email to all configured recipients')
+    test_email_parser.add_argument('--subject', '-s', type=str, help='Test email subject line')
+    
     # Parse arguments
     args = parser.parse_args()
     
@@ -90,10 +120,21 @@ Environment Variables:
         sys.exit(1)
     
     # Check API key for AI commands
-    if args.command in ['generate'] and not os.getenv('OPENAI_API_KEY'):
+    if args.command in ['generate', 'email'] and not os.getenv('OPENAI_API_KEY'):
         print("❌ Error: OPENAI_API_KEY environment variable not set")
         print("   Please run: source env.sh")
         sys.exit(1)
+    
+    # Check email configuration for email commands
+    if args.command in ['email', 'test-email']:
+        if not os.getenv('POSTMARK_API_KEY'):
+            print("❌ Error: POSTMARK_API_KEY environment variable not set")
+            print("   Please set POSTMARK_API_KEY in env.sh")
+            sys.exit(1)
+        if not os.getenv('TO_EMAILS'):
+            print("❌ Error: TO_EMAILS environment variable not set")
+            print("   Please set TO_EMAILS in env.sh (comma-separated list)")
+            sys.exit(1)
     
     try:
         # Execute commands
@@ -120,6 +161,41 @@ Environment Variables:
             if output_path:
                 print(f"🎉 Newsletter generated successfully!")
                 print(f"📁 Location: {output_path}")
+        
+        elif args.command == 'email':
+            generator = MarketNewsletterGenerator(
+                min_volume=args.min_volume,
+                min_change_pct=args.min_change,
+                max_markets=args.max_markets,
+                hours_back=args.hours,
+                market_limit=args.limit,
+                format_type=args.format
+            )
+            
+            print(f"📧 Generating and emailing newsletter with settings:")
+            print(f"   Format: {args.format}")
+            print(f"   Min volume: ${args.min_volume:,.0f}")
+            print(f"   Min change: {args.min_change}%")
+            print(f"   Max markets: {args.max_markets}")
+            print(f"   Time window: {args.hours} hours")
+            if args.subject:
+                print(f"   Subject: {args.subject}")
+            print()
+            
+            results = generator.generate_and_email_newsletter(args.output, args.subject)
+            
+            if results["newsletter_path"]:
+                print(f"📁 Newsletter also saved to: {results['newsletter_path']}")
+        
+        elif args.command == 'test-email':
+            generator = MarketNewsletterGenerator()
+            
+            print("🧪 Testing email configuration...")
+            if args.subject:
+                print(f"   Subject: {args.subject}")
+            print()
+            
+            results = generator.send_test_email(args.subject)
             
         elif args.command == 'summary':
             generator = MarketNewsletterGenerator(
@@ -149,6 +225,16 @@ Environment Variables:
             print("Environment:")
             print(f"OpenAI API: {'✅ Set' if os.getenv('OPENAI_API_KEY') else '❌ Missing'}")
             print(f"Polymarket Key: {'✅ Set' if os.getenv('POLYMARKET_SECRET_KEY') else '❌ Missing'}")
+            print(f"Postmark API: {'✅ Set' if os.getenv('POSTMARK_API_KEY') else '❌ Missing'}")
+            
+            if config.get('email_configured'):
+                print(f"Email Recipients: {config.get('email_recipients', 0)}")
+                if config.get('email_addresses'):
+                    print("Email Addresses:")
+                    for email in config.get('email_addresses', []):
+                        print(f"  • {email}")
+            else:
+                print("Email: ❌ Not configured (set POSTMARK_API_KEY and TO_EMAILS)")
             
     except KeyboardInterrupt:
         print("\n👋 Operation cancelled by user")

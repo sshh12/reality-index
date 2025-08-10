@@ -4,6 +4,7 @@ from typing import Optional
 from .polymarket_client import PolymarketClient
 from .data_processor import MarketDataProcessor
 from .openai_client import NewsletterAI
+from .email_sender import NewsletterEmailSender
 
 
 class MarketNewsletterGenerator:
@@ -13,7 +14,7 @@ class MarketNewsletterGenerator:
                  max_markets: int = 10000,
                  hours_back: int = 24,
                  market_limit: Optional[int] = None,
-                 format_type: str = "detailed-technical-letter"):
+                 format_type: str = "institutional-analysis"):
         
         self.polymarket = PolymarketClient()
         self.processor = MarketDataProcessor(min_volume, min_change_pct, max_markets)
@@ -21,6 +22,13 @@ class MarketNewsletterGenerator:
         self.hours_back = hours_back
         self.market_limit = market_limit
         self.format_type = format_type
+        
+        # Email sender (optional - only initialize if env vars are set)
+        self.email_sender = None
+        try:
+            self.email_sender = NewsletterEmailSender()
+        except ValueError:
+            pass  # Email not configured
         
         # Create output directory if it doesn't exist
         self.output_dir = "newsletters"
@@ -77,6 +85,94 @@ class MarketNewsletterGenerator:
         
         print(f"✅ Newsletter saved to: {output_path}")
         return output_path
+    
+    def generate_and_email_newsletter(self, output_file: Optional[str] = None, subject: Optional[str] = None) -> dict:
+        """Generate newsletter and send via email"""
+        
+        if not self.email_sender:
+            raise ValueError("Email not configured. Please set POSTMARK_API_KEY and TO_EMAILS environment variables.")
+        
+        print("📧 Generating newsletter for email distribution...")
+        
+        # Step 1: Generate newsletter content (same as generate_newsletter but don't save to file yet)
+        print("🔍 Fetching Polymarket data...")
+        
+        all_markets = self.polymarket.get_all_markets(self.market_limit)
+        print(f"   Found {len(all_markets)} total markets{' (limited)' if self.market_limit else ''}")
+        
+        active_markets = self.polymarket.filter_active_markets(all_markets, self.processor.min_volume)
+        print(f"   {len(active_markets)} active markets meet criteria")
+        
+        if not active_markets:
+            raise ValueError("No markets meet the criteria. Try lowering the volume threshold.")
+        
+        markets_with_changes = self.polymarket.calculate_price_changes(active_markets)
+        print(f"   {len(markets_with_changes)} markets have price data")
+        
+        if not markets_with_changes:
+            raise ValueError("No markets have sufficient price history. Try increasing the time window.")
+        
+        newsletter_data = self.processor.create_newsletter_data(markets_with_changes)
+        significant_moves = newsletter_data["summary_stats"]["significant_moves"]
+        print(f"   {significant_moves} markets show significant movements")
+        
+        print(f"✍️  Generating newsletter with AI ({self.format_type})...")
+        newsletter_content = self.ai.generate_newsletter(newsletter_data, self.format_type)
+        
+        # Step 2: Save newsletter to file (optional)
+        output_path = None
+        if output_file or True:  # Always save a copy
+            if not output_file:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+                output_file = f"polymarket_newsletter_{timestamp}.md"
+            
+            output_path = os.path.join(self.output_dir, output_file)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(newsletter_content)
+            print(f"📁 Newsletter saved to: {output_path}")
+        
+        # Step 3: Send emails
+        print("📤 Sending newsletter emails...")
+        email_results = self.email_sender.send_newsletter(newsletter_content, subject)
+        
+        print(f"✅ Email distribution complete!")
+        print(f"   📧 Recipients: {email_results['total_recipients']}")
+        print(f"   ✅ Successful: {email_results['successful_sends']}")
+        print(f"   ❌ Failed: {email_results['failed_sends']}")
+        
+        if email_results['failed_sends'] > 0:
+            print("   Failed emails:")
+            for result in email_results['results']:
+                if result['status'] == 'failed':
+                    print(f"     • {result['email']}: {result['error']}")
+        
+        return {
+            "newsletter_path": output_path,
+            "email_results": email_results
+        }
+    
+    def send_test_email(self, subject: Optional[str] = None) -> dict:
+        """Send a test email to all configured recipients"""
+        
+        if not self.email_sender:
+            raise ValueError("Email not configured. Please set POSTMARK_API_KEY and TO_EMAILS environment variables.")
+        
+        print("📧 Sending test email to all configured recipients...")
+        
+        results = self.email_sender.send_test_email(subject)
+        
+        print(f"✅ Test email distribution complete!")
+        print(f"   📧 Recipients: {results['total_recipients']}")
+        print(f"   ✅ Successful: {results['successful_sends']}")
+        print(f"   ❌ Failed: {results['failed_sends']}")
+        
+        if results['failed_sends'] > 0:
+            print("   Failed emails:")
+            for result in results['results']:
+                if result['status'] == 'failed':
+                    print(f"     • {result['email']}: {result['error']}")
+        
+        return results
     
     def print_summary(self) -> None:
         """Print a quick summary of market movements without generating full newsletter"""
@@ -150,10 +246,21 @@ class MarketNewsletterGenerator:
     
     def get_config_summary(self) -> dict:
         """Get current configuration settings"""
-        return {
+        config = {
             "min_volume": self.processor.min_volume,
             "min_change_pct": self.processor.min_change_pct,
             "max_markets": self.processor.max_markets,
             "hours_back": self.hours_back,
-            "output_dir": self.output_dir
+            "output_dir": self.output_dir,
+            "format_type": self.format_type,
+            "email_configured": bool(self.email_sender)
         }
+        
+        if self.email_sender:
+            email_config = self.email_sender.get_config_summary()
+            config.update({
+                "email_recipients": email_config["recipient_count"],
+                "email_addresses": email_config["recipients"]
+            })
+        
+        return config

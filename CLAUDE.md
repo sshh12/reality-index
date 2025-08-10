@@ -1,8 +1,9 @@
 ## Development Workflow
 
-### General preferences
+### General Preferences
 - Do not hardcode fake test data. Instead prefer python script integration tests to figure out why things are failing.
 - Do not use dummy data for fallbacks, instead hard fail when things do not work with detailed error messages.
+- Prefer default constants only in the entrypoint but not in functions and classes within the package code.
 
 ### Entrypoint
 
@@ -17,7 +18,7 @@
 
 - Run python files with `source env.sh && PYTHONPATH=. python ...`
 - If needed setup venv using `python -m venv .venv`
-- Use existing venv and env.sh for API keys (OPENAI_API_KEY and POLYMARKET_SECRET_KEY already set)
+- Use existing venv and env.sh for API keys (OPENAI_API_KEY, POSTMARK_API_KEY, and POLYMARKET_SECRET_KEY already set)
 - Create a `requirements.txt` if it doesn't exist and append as needed. Pin packages to major versions (pin to what pip install comes up with rather than your own guess).
 
 ### Formatting
