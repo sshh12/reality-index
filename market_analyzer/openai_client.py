@@ -6,6 +6,16 @@ from typing import Dict
 NEWSLETTER_FORMATS = {
     "detailed-technical-letter": {
         "name": "Detailed Technical Letter",
+        "developer_instructions": """You are a financial market analyst who specializes in prediction markets. You write engaging, informative newsletters about market movements that are accessible to both novice and experienced traders. 
+
+You have access to web search and code interpreter tools:
+- Use web search to find recent news, events, or context that might explain market movements
+- Use code interpreter to perform statistical analysis, create visualizations, or calculate correlations
+- Focus on the implications and context of price movements, not just the numbers
+
+When searching for context, identify the key themes emerging from the market data and search for recent news related to those specific topics. This could include monetary policy, geopolitical developments, technology releases, regulatory changes, election outcomes, economic data, corporate earnings, natural disasters, or any other events that could drive the prediction markets you're analyzing.
+
+Write in a professional tone suitable for institutional readers who want comprehensive analysis and insights.""",
         "template": """
 
 Please generate a professional newsletter with this EXACT structure using markdown headers:
@@ -67,33 +77,43 @@ REQUIREMENTS:
 """
     },
     "concise-executive-brief": {
-        "name": "Concise Executive Brief", 
+        "name": "Concise Executive Brief",
+        "developer_instructions": """You are a financial market analyst who specializes in prediction markets. You write clear, accessible briefings for intelligent but busy readers who want to stay informed about major market movements and world events.
+
+You have access to web search and code interpreter tools:
+- Use web search to find recent news, events, or context that might explain market movements
+- Use code interpreter to perform statistical analysis, create visualizations, or calculate correlations
+- Focus on translating complex market data into digestible insights
+
+When searching for context, identify the key themes emerging from the market data and search for recent news related to those specific topics. This could include monetary policy, geopolitical developments, technology releases, regulatory changes, election outcomes, economic data, corporate earnings, natural disasters, or any other events that could drive the prediction markets you're analyzing.
+
+Write for an intelligent general audience (executives, curious investors, informed citizens) using plain language. Avoid jargon and explain complex concepts clearly. Focus on what matters for both markets AND average people's daily lives.""",
         "template": """
 
 Please generate a concise executive newsletter with this EXACT structure:
 
 # Polymarket Brief: [Compelling Headline]
 
-## [Theme 1: Descriptive Title]
-**What's Happening in the Markets:** [2-3 sentences describing the specific market movements and price changes. Bold key market names, percentages, and dollar amounts.]
+## 1. [Theme Title]: The New Wall Street Mainstay
+**What's Happening in the Markets:** [2-3 sentences describing specific market movements in plain language. Focus on the story, not jargon. Bold key numbers and dates.]
 
-**The Bigger Picture:** [2-3 sentences explaining the broader implications and context. Bold key concepts, policy changes, and major trends.]
+**The Bigger Picture:** [2-3 sentences explaining what this means for the world and economy in accessible terms. Avoid technical jargon. Bold major concepts and changes.]
 
-**What This Means & What to Watch:** [2-3 sentences on impact for average people and key events to monitor. Bold specific dates, events, and impacts.]
+**What This Means & What to Watch:** [2-3 sentences covering impact on both markets AND average people's daily lives. Bold key events and dates to monitor.]
 
-**Market Prediction (Speculative):** [1-2 sentences with specific, aggressive predictions about market odds and price movements. Bold specific percentage predictions and timeframes.]
+**Market Prediction (Speculative):** [1-2 sentences with specific, aggressive predictions. Bold percentage ranges and timeframes. Make it accessible.]
 
-## [Theme 2: Descriptive Title]
-**What's Happening in the Markets:** [2-3 sentences describing the specific market movements and price changes. Bold key market names, percentages, and dollar amounts.]
+## 2. [Theme Title]: A Tug-of-War Between Lower Rates and Higher Walls  
+**What's Happening in the Markets:** [2-3 sentences describing specific market movements in plain language. Focus on the story, not jargon. Bold key numbers and dates.]
 
-**The Bigger Picture:** [2-3 sentences explaining the broader implications and context. Bold key concepts, policy changes, and major trends.]
+**The Bigger Picture:** [2-3 sentences explaining what this means for the world and economy in accessible terms. Avoid technical jargon. Bold major concepts and changes.]
 
-**What This Means & What to Watch:** [2-3 sentences on impact for average people and key events to monitor. Bold specific dates, events, and impacts.]
+**What This Means & What to Watch:** [2-3 sentences covering impact on both markets AND average people's daily lives. Bold key events and dates to monitor.]
 
-**Market Prediction (Speculative):** [1-2 sentences with specific, aggressive predictions about market odds and price movements. Bold specific percentage predictions and timeframes.]
+**Market Prediction (Speculative):** [1-2 sentences with specific, aggressive predictions. Bold percentage ranges and timeframes. Make it accessible.]
 
-## [Theme 3: Descriptive Title]
-[Continue for 3-6 themes total based on the data, each with the same four-part structure with bolded headers]
+## 3. [Theme Title]: The Fragile State of Stability
+[Continue for 3-6 themes total based on the data, each with the same four-part structure. Use descriptive, accessible titles like "The AI Race", "World Elections", etc.]
 
 ## Citations
 [1] **Market Name:** Brief explanation of the price change and its significance
@@ -101,16 +121,15 @@ Please generate a concise executive newsletter with this EXACT structure:
 etc.
 
 REQUIREMENTS:
-- 800-1200 words total, focused on concise insights
+- 800-1200 words total, prioritizing clarity and digestibility over data density
+- Write for intelligent but busy general readers (executives, curious investors, informed citizens)
+- Use plain language and avoid jargon like "gamma-driven", "crypto beta", "hardening positions"
 - Each theme section should be exactly 4 paragraphs with the bolded headers shown
-- Use **bold formatting** extensively for key terms, numbers, dates, market names, percentages, and important concepts
-- Bold all section headers: **What's Happening in the Markets:**, **The Bigger Picture:**, **What This Means & What to Watch:**, **Market Prediction (Speculative):**
-- Use web search to provide real-world context
-- Write for busy executives who want key insights quickly
-- Be AGGRESSIVELY PREDICTIVE with specific market forecasts
-- Focus on themes that matter for business and finance
-- Prioritize crypto, economics, geopolitics, technology, and major elections
-- Avoid sports, entertainment, and trivial topics
+- Use **bold formatting** for key terms, numbers, dates, but don't overwhelm with technical data
+- Focus on themes that connect to real-world events people care about
+- Explain WHY movements matter for both financial markets AND ordinary people's lives
+- Be AGGRESSIVELY PREDICTIVE but make predictions accessible and understandable
+- Prioritize world events, economics, technology, geopolitics that affect daily life
 - END the newsletter with this exact footer format: "Generated: {timestamp} | {total_markets} markets analyzed"
 """
     }
@@ -129,14 +148,11 @@ class NewsletterAI:
         prompt = self._build_newsletter_prompt(newsletter_data, format_type)
         
         try:
-            developer_instructions = """You are a financial market analyst who specializes in prediction markets. You write engaging, informative newsletters about market movements that are accessible to both novice and experienced traders. 
-
-You have access to web search and code interpreter tools:
-- Use web search to find recent news, events, or context that might explain market movements
-- Use code interpreter to perform statistical analysis, create visualizations, or calculate correlations
-- Focus on the implications and context of price movements, not just the numbers
-
-When searching for context, identify the key themes emerging from the market data and search for recent news related to those specific topics. This could include monetary policy, geopolitical developments, technology releases, regulatory changes, election outcomes, economic data, corporate earnings, natural disasters, or any other events that could drive the prediction markets you're analyzing."""
+            # Get format-specific developer instructions
+            if format_type not in NEWSLETTER_FORMATS:
+                raise ValueError(f"Unknown format type: {format_type}. Available: {list(NEWSLETTER_FORMATS.keys())}")
+            
+            developer_instructions = NEWSLETTER_FORMATS[format_type]["developer_instructions"]
             
             response = self.client.responses.create(
                 model=self.model,
