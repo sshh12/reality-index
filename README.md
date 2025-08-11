@@ -2,6 +2,9 @@
 
 An automated system that analyzes prediction market data from Polymarket and generates AI-powered newsletters about significant market movements and global events.
 
+<img width="902" height="650" alt="Screenshot 2025-08-10 at 5 06 33 PM" src="https://github.com/user-attachments/assets/7c1d3361-8dce-483a-a913-078f3aa0881e" />
+
+
 ## What This Does
 
 This system monitors thousands of prediction markets covering politics, economics, technology, and world events. When significant price movements occur, it:
