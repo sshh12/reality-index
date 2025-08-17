@@ -36,14 +36,14 @@ def validate_environment():
     return True
 
 def send_newsletter():
-    """Generate and send the weekly newsletter"""
+    """Generate and send the weekly tech newsletter"""
     try:
-        logger.info("🚀 Starting weekly newsletter generation...")
+        logger.info("🚀 Starting weekly tech newsletter generation...")
         
         # Create newsletter generator with weekly parameters
         generator = MarketNewsletterGenerator(
             min_volume=10000,      # Default volume threshold
-            min_change_pct=3.0,    # Default change threshold  
+            min_change_pct=2.0,    # Default change threshold  
             max_markets=10000,     # Allow all markets
             hours_back=168,        # 7 days (168 hours)
             format_type="tech-outlook"
@@ -53,14 +53,42 @@ def send_newsletter():
         results = generator.generate_and_email_newsletter()
         
         if results["email_results"]["successful_sends"] > 0:
-            logger.info(f"✅ Newsletter sent successfully to {results['email_results']['successful_sends']} recipients")
+            logger.info(f"✅ Tech newsletter sent successfully to {results['email_results']['successful_sends']} recipients")
         else:
-            logger.error(f"❌ Newsletter failed to send to all recipients")
+            logger.error(f"❌ Tech newsletter failed to send to all recipients")
             
         return True
         
     except Exception as e:
-        logger.error(f"❌ Newsletter generation failed: {str(e)}")
+        logger.error(f"❌ Tech newsletter generation failed: {str(e)}")
+        return False
+
+def send_investments_newsletter():
+    """Generate and send the weekly investments newsletter"""
+    try:
+        logger.info("📈 Starting weekly investments newsletter generation...")
+        
+        # Create newsletter generator with weekly parameters
+        generator = MarketNewsletterGenerator(
+            min_volume=10000,      # Default volume threshold
+            min_change_pct=2.0,    # Default change threshold  
+            max_markets=10000,     # Allow all markets
+            hours_back=168,        # 7 days (168 hours)
+            format_type="stock-predictions"
+        )
+        
+        # Generate and email newsletter
+        results = generator.generate_and_email_newsletter()
+        
+        if results["email_results"]["successful_sends"] > 0:
+            logger.info(f"✅ Investments newsletter sent successfully to {results['email_results']['successful_sends']} recipients")
+        else:
+            logger.error(f"❌ Investments newsletter failed to send to all recipients")
+            
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Investments newsletter generation failed: {str(e)}")
         return False
 
 def send_test_email():
@@ -93,10 +121,14 @@ def main():
     
     # Skip startup test email - service is ready
     
-    # Schedule the newsletter for every Friday at 6 PM PST
+    # Schedule the tech newsletter for every Friday at 6 PM PST
     schedule.every().friday.at("18:00").do(send_newsletter)
     
-    logger.info("⏰ Newsletter scheduled for every Friday at 6:00 PM PST")
+    # Schedule the investments newsletter for every Friday at 6:15 PM PST
+    schedule.every().friday.at("18:15").do(send_investments_newsletter)
+    
+    logger.info("⏰ Tech newsletter scheduled for every Friday at 6:00 PM PST")
+    logger.info("⏰ Investments newsletter scheduled for every Friday at 6:15 PM PST")
     logger.info("🔄 Cron service running... (press Ctrl+C to stop)")
     
     # Keep the service running
