@@ -22,8 +22,52 @@ class SubscriptionEmailSender:
         # Get base URL for unsubscribe links
         self.base_url = os.environ.get("BASE_URL", "https://reality-index.sshh.io")
     
+    def ensure_section_titles_bolded(self, markdown_content: str) -> str:
+        """Ensure section titles like 'THE MARKET MOVES:', 'MARKET MOVES:', etc. are properly bolded"""
+        import re
+        
+        # Common section patterns that should be bolded
+        section_patterns = [
+            r'^(THE MARKET MOVES?:?)$',
+            r'^(MARKET MOVES?:?)$', 
+            r'^(THE WEEKLY THESIS:?)$',
+            r'^(WEEKLY THESIS:?)$',
+            r'^(THE SIGNAL SNAPSHOT:?)$',
+            r'^(SIGNAL SNAPSHOT:?)$',
+            r'^(KEY PREDICTIONS:?)$',
+            r'^(PREDICTIONS:?)$',
+            r'^(THE BOTTOM LINE:?)$',
+            r'^(BOTTOM LINE:?)$',
+            r'^(WHAT TO WATCH:?)$',
+            r'^(WATCHING:?)$',
+            r'^(THE OUTLOOK:?)$',
+            r'^(OUTLOOK:?)$'
+        ]
+        
+        lines = markdown_content.split('\n')
+        processed_lines = []
+        
+        for line in lines:
+            original_line = line
+            stripped_line = line.strip()
+            
+            # Check if this line matches any section pattern and isn't already bolded
+            if stripped_line and not stripped_line.startswith('**'):
+                for pattern in section_patterns:
+                    if re.match(pattern, stripped_line, re.IGNORECASE):
+                        # Make it bold by wrapping in **
+                        line = line.replace(stripped_line, f"**{stripped_line}**")
+                        break
+            
+            processed_lines.append(line)
+        
+        return '\n'.join(processed_lines)
+    
     def markdown_to_html(self, markdown_content: str, unsubscribe_url: str) -> str:
         """Convert markdown content to HTML with newsletter styling and unsubscribe link"""
+        
+        # Pre-process markdown to ensure section titles are properly bolded
+        processed_content = self.ensure_section_titles_bolded(markdown_content)
         
         # Configure markdown with extensions
         md = markdown.Markdown(extensions=[
@@ -33,7 +77,7 @@ class SubscriptionEmailSender:
         ])
         
         # Convert markdown to HTML
-        html_body = md.convert(markdown_content)
+        html_body = md.convert(processed_content)
         
         # Add unsubscribe footer
         unsubscribe_footer = f"""
@@ -193,9 +237,6 @@ class SubscriptionEmailSender:
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1 style="margin: 0; color: #1f2937;">The Reality Index</h1>
-        </div>
         {html_body}
         {unsubscribe_footer}
     </div>

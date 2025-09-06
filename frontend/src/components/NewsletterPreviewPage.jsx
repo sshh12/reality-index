@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import axios from 'axios'
 
 const NewsletterPreviewPage = () => {
   const { id } = useParams()
-  const [searchParams] = useSearchParams()
   const [newsletter, setNewsletter] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -151,8 +150,26 @@ const NewsletterPreviewPage = () => {
         }
         
         .newsletter-content strong {
-          font-weight: 600 !important;
+          font-weight: 700 !important;
           color: #1f2937 !important;
+        }
+        
+        /* Style for section titles like "THE MARKET MOVES:", "MARKET MOVES:", etc. */
+        .newsletter-content p strong:only-child {
+          font-weight: 700 !important;
+          font-size: 1.1em !important;
+          color: #1f2937 !important;
+          display: block !important;
+          margin-bottom: 0.5rem !important;
+        }
+        
+        /* Style for lines that are all caps and end with colon */
+        .newsletter-content p {
+          line-height: 1.7 !important;
+        }
+        
+        .newsletter-content p:has(strong) {
+          margin-bottom: 0.75rem !important;
         }
         
         .newsletter-content p {

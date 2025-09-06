@@ -40,4 +40,4 @@ echo "📋 Supervisor Status:    supervisorctl status"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Start supervisor to manage both processes
-exec /usr/local/bin/supervisord -c /app/supervisord.conf
+exec python -m supervisor.supervisord -c /app/supervisord.conf
