@@ -21,8 +21,8 @@ class Subscription(Base):
     active = Column(Boolean, default=True, nullable=False)
     unsubscribe_token = Column(String, unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
 
-    # Ensure unique combination of email and topics (sorted)
-    __table_args__ = (UniqueConstraint('email', 'topics', name='unique_email_topics'),)
+    # Note: Unique constraint on (email, topics) removed due to PostgreSQL JSON indexing limitations
+    # Uniqueness is enforced in application logic via get_by_email_and_topics()
 
     def __repr__(self):
         return f"<Subscription(email='{self.email}', topics={self.topics}, active={self.active})>"

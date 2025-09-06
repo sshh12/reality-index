@@ -11,7 +11,6 @@ from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, EmailStr, Field, validator
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy import Text
 
 from backend.database.database import get_database, init_database
@@ -138,12 +137,6 @@ async def subscribe(
                 topics=topics
             )
             
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Already subscribed to this topic combination"
-        )
     except Exception as e:
         db.rollback()
         raise HTTPException(
