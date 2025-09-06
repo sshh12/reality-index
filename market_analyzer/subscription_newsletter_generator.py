@@ -108,7 +108,7 @@ class SubscriptionNewsletterGenerator:
         print(f"🎯 Topic context: {topic_context}")
         
         # We'll pass this context through a modified AI call
-        newsletter_content = self.ai.generate_newsletter_with_context(newsletter_data, "tech-outlook", topic_context)
+        newsletter_content = self.ai.generate_newsletter_with_context(newsletter_data, "tech-outlook", topic_context, topics)
         
         # Step 7: Save to file (optional)
         if output_file:

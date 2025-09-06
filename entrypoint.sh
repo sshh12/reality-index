@@ -39,5 +39,15 @@ echo "❤️  Health Check:        http://localhost:8080/health"
 echo "📋 Supervisor Status:    supervisorctl status"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Start supervisor to manage both processes
-exec python -m supervisor.supervisord -c /app/supervisord.conf
+# Check if supervisor is available and start both processes
+if python -c "import supervisor.supervisord" 2>/dev/null; then
+    echo "🔧 Using supervisor to manage both processes"
+    exec python -m supervisor.supervisord -c /app/supervisord.conf
+else
+    echo "⚠️  Supervisor not available, starting processes individually"
+    echo "🌐 Starting web application in background..."
+    PYTHONPATH=/app python -m uvicorn backend.api:app --host 0.0.0.0 --port 8080 &
+    
+    echo "⏰ Starting cron scheduler..."
+    PYTHONPATH=/app python cron_service.py
+fi

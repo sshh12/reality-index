@@ -48,7 +48,7 @@ class NewsletterAI:
             print(f"Error generating newsletter: {e}")
             raise
     
-    def generate_newsletter_with_context(self, newsletter_data: Dict, format_type: str = "tech-outlook", topic_context: str = "") -> str:
+    def generate_newsletter_with_context(self, newsletter_data: Dict, format_type: str = "tech-outlook", topic_context: str = "", topics: list = None) -> str:
         """Generate newsletter with specific topic context"""
         
         # Create the main prompt with topic context
@@ -87,7 +87,15 @@ When analyzing the market data, prioritize insights that align with the subscrib
             timestamp = newsletter_data.get("timestamp", "Unknown")
             total_markets = summary_stats.get("total_markets_analyzed", 0)
             
-            footer = f"\n\n---\n\n*Generated: {timestamp} | {total_markets} markets analyzed*"
+            # Include topics in footer if provided
+            from .topic_config import get_display_name
+            footer_parts = [f"Generated: {timestamp}", f"{total_markets} markets analyzed"]
+            
+            if topics:
+                topic_names = [get_display_name(topic) for topic in topics]
+                footer_parts.append(f"Topics: {', '.join(topic_names)}")
+            
+            footer = f"\n\n---\n\n*{' | '.join(footer_parts)}*"
             
             return newsletter_content + footer
             
