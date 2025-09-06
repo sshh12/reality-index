@@ -71,20 +71,20 @@ def validate_email(email: str) -> bool:
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
+# Mount static files immediately (before routes)
+# Mount at root level so Vite's /assets/* paths work correctly
+static_dir = "/app/static"
+if os.path.exists(static_dir):
+    app.mount("/assets", StaticFiles(directory=f"{static_dir}/assets"), name="assets")
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    print("✅ Static files mounted at startup")
+
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
     try:
         init_database()
         print("✅ Database initialized successfully")
-        
-        # Mount static files if directory exists
-        static_dir = "/app/static"
-        if os.path.exists(static_dir):
-            app.mount("/static", StaticFiles(directory=static_dir), name="static")
-            print("✅ Static files mounted")
-        else:
-            print("⚠️  Static directory not found, skipping static file mounting")
             
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
@@ -350,10 +350,13 @@ async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="API endpoint not found")
     
+    # Assets and static files are handled by mounted StaticFiles above
+    # This route only handles SPA routing for the React app
+    
     # For root or non-API paths, serve index.html
     index_path = "/app/static/index.html"
     if os.path.exists(index_path):
-        return FileResponse(index_path)
+        return FileResponse(index_path, media_type='text/html')
     
     # If no static files, return a basic message
     return {"message": "Frontend not built yet", "tip": "Run the Docker build to compile the React app"}
