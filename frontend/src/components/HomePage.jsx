@@ -332,6 +332,15 @@ const HomePage = () => {
             >
               source code on GitHub
             </a>
+            {' '}or{' '}
+            <a 
+              href="https://github.com/sshh12/reality-index/issues" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              submit feedback
+            </a>
           </p>
         </div>
       </div>
