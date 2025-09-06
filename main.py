@@ -85,6 +85,10 @@ Examples:
     sanity_parser = subparsers.add_parser('sanity-check', help='Run sanity checks on price change calculations')
     sanity_parser.add_argument('--sample-size', type=int, default=50, help='Number of markets to analyze (default: 50)')
     
+    # Generate all newsletters command
+    generate_all_parser = subparsers.add_parser('generate-all', help='Generate and send newsletters for all active subscribers')
+    generate_all_parser.add_argument('--dry-run', action='store_true', help='Generate newsletters but do not send emails')
+    
     # Parse arguments
     args = parser.parse_args()
     
@@ -543,6 +547,58 @@ When analyzing the market data, prioritize insights that align with the subscrib
                 print("   3. oneMonthPriceChange (as last resort)")
             else:
                 print("✅ Price change periods look reasonable for weekly analysis.")
+        
+        elif args.command == 'generate-all':
+            print('🚀 Running full newsletter generation for all active subscribers...')
+            if args.dry_run:
+                print('🏃 DRY RUN MODE: No emails will be sent')
+            print()
+            
+            # Create generator
+            generator = SubscriptionNewsletterGenerator(
+                min_volume=10000,
+                min_change_pct=2.0,
+                max_markets=10000
+            )
+            
+            if args.dry_run:
+                # For dry run, just show what would be generated
+                with get_db_session() as db:
+                    active_subs = Subscription.get_active_subscriptions(db)
+                    if not active_subs:
+                        print("📭 No active subscriptions found")
+                        sys.exit(0)
+                    
+                    # Get unique topic combinations
+                    unique_topics = set()
+                    for sub in active_subs:
+                        topics_tuple = tuple(sorted(sub.topics))
+                        unique_topics.add(topics_tuple)
+                    
+                    print(f"📊 Found {len(active_subs)} active subscriptions")
+                    print(f"📰 Would generate {len(unique_topics)} newsletters for:")
+                    for topics in sorted(unique_topics):
+                        topic_display = ' + '.join([get_display_name(t) for t in topics])
+                        subscriber_count = len([s for s in active_subs if tuple(sorted(s.topics)) == topics])
+                        print(f"   • {topic_display}: {subscriber_count} subscribers")
+            else:
+                # Run actual generation
+                results = generator.generate_and_send_all_newsletters()
+                
+                print('✅ Newsletter generation complete!')
+                if 'error' in results:
+                    print(f'❌ Error: {results["error"]}')
+                else:
+                    print(f'📰 Topic combinations processed: {results["total_combinations"]}')  
+                    print(f'📧 Total emails sent: {results["total_emails_sent"]}')
+                    print()
+                    
+                    for result in results['results']:
+                        if 'error' in result:
+                            print(f'❌ {" + ".join(result["topics"])}: {result["error"]}') 
+                        else:
+                            topics_display = ' + '.join(result['topics'])
+                            print(f'✅ {topics_display}: {result["subscriber_count"]} subscribers, {result["email_results"]["successful_sends"]} sent')
             
     except KeyboardInterrupt:
         print("\n👋 Operation cancelled by user")
