@@ -1,7 +1,7 @@
 import os
 from openai import OpenAI
 from typing import Dict
-from .newsletter_formats import NEWSLETTER_FORMATS
+from .newsletter_formats import DEVELOPER_INSTRUCTIONS, NEWSLETTER_TEMPLATE
 
 class NewsletterAI:
     def __init__(self):
@@ -15,11 +15,8 @@ class NewsletterAI:
         prompt = self._build_newsletter_prompt(newsletter_data, format_type)
         
         try:
-            # Get format-specific developer instructions
-            if format_type not in NEWSLETTER_FORMATS:
-                raise ValueError(f"Unknown format type: {format_type}. Available: {list(NEWSLETTER_FORMATS.keys())}")
-            
-            developer_instructions = NEWSLETTER_FORMATS[format_type]["developer_instructions"]
+            # Use simplified developer instructions
+            developer_instructions = DEVELOPER_INSTRUCTIONS
             
             response = self.client.responses.create(
                 model=self.model,
@@ -51,6 +48,67 @@ class NewsletterAI:
             print(f"Error generating newsletter: {e}")
             raise
     
+    def generate_newsletter_with_context(self, newsletter_data: Dict, format_type: str = "tech-outlook", topic_context: str = "") -> str:
+        """Generate newsletter with specific topic context"""
+        
+        # Create the main prompt with topic context
+        prompt = self._build_newsletter_prompt_with_context(newsletter_data, format_type, topic_context)
+        
+        try:
+            # Get base developer instructions and add topic context
+            base_instructions = DEVELOPER_INSTRUCTIONS
+            
+            # Enhance instructions with topic context
+            enhanced_instructions = f"""{base_instructions}
+
+TOPIC FOCUS: {topic_context}
+
+When analyzing the market data, prioritize insights that align with the subscriber's topic interests while maintaining comprehensive coverage of all significant market movements."""
+            
+            response = self.client.responses.create(
+                model=self.model,
+                instructions=enhanced_instructions,
+                input=prompt,
+                tools=[
+                    {"type": "web_search_preview"},
+                    {
+                        "type": "code_interpreter",
+                        "container": {"type": "auto"}
+                    }
+                ],
+                reasoning={
+                    "effort": "high"
+                }
+            )
+            
+            # Add programmatic footer
+            newsletter_content = response.output_text
+            summary_stats = newsletter_data.get("summary_stats", {})
+            timestamp = newsletter_data.get("timestamp", "Unknown")
+            total_markets = summary_stats.get("total_markets_analyzed", 0)
+            
+            footer = f"\n\n---\n\n*Generated: {timestamp} | {total_markets} markets analyzed*"
+            
+            return newsletter_content + footer
+            
+        except Exception as e:
+            print(f"Error generating newsletter with context: {e}")
+            raise
+    
+    def _build_newsletter_prompt_with_context(self, data: Dict, format_type: str, topic_context: str) -> str:
+        """Build newsletter prompt with topic context"""
+        base_prompt = self._build_newsletter_prompt(data, format_type)
+        
+        if topic_context:
+            context_addition = f"""
+
+SUBSCRIBER TOPIC FOCUS: {topic_context}
+
+Please emphasize insights and analysis that align with these topic areas while maintaining comprehensive coverage of all significant market movements."""
+            return base_prompt + context_addition
+        
+        return base_prompt
+    
     def _build_newsletter_prompt(self, data: Dict, format_type: str = "institutional-analysis") -> str:
         """Build the comprehensive prompt for newsletter generation"""
         
@@ -81,12 +139,8 @@ TOP MARKET MOVEMENTS:
    - Closes: {market['end_date']}
 """
         
-        if format_type not in NEWSLETTER_FORMATS:
-            raise ValueError(f"Unknown format type: {format_type}. Available: {list(NEWSLETTER_FORMATS.keys())}")
-        
-        # Get template (no substitution needed since footer is programmatic)
-        template = NEWSLETTER_FORMATS[format_type]["template"]
-        prompt += template
+        # Add the newsletter template
+        prompt += NEWSLETTER_TEMPLATE
         
         return prompt
     

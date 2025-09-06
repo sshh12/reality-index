@@ -1,115 +1,67 @@
 #!/usr/bin/env python3
 """
-Polymarket News Newsletter Generator
-
-Analyzes Polymarket data to identify significant market shifts and generates 
-AI-powered newsletters from the most interesting movements.
+The Reality Index Newsletter Web Application
 
 Usage:
-    python main.py [command] [options]
+    python main.py web [--port 8080] [--reload]
 """
 
 import argparse
 import sys
 import os
-from market_analyzer.newsletter_generator import MarketNewsletterGenerator
-from market_analyzer.newsletter_formats import NEWSLETTER_FORMATS
+from datetime import datetime
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate newsletters from Polymarket data",
+        description="The Reality Index Newsletter Web Application",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    python main.py generate                    # Generate full newsletter
-    python main.py summary                     # Quick market summary  
-    python main.py search "election"           # Search for specific markets
-    python main.py config                      # Show current settings
+    python main.py web                         # Start web server on port 8080
+    python main.py web --port 3000            # Start on custom port
+    python main.py web --reload               # Start with auto-reload for development
     
-    # Custom thresholds  
-    python main.py generate --min-volume 50000 --min-change 10
-    python main.py generate --hours 24 --max-markets 15
+    python main.py newsletter tech ai          # Generate newsletter for tech + AI topics
+    python main.py newsletter crypto --dry-run # Generate crypto newsletter (no emails)
+    python main.py newsletter sports --save-only # Save newsletter to file only
     
-    # Different formats
-    python main.py generate --format executive-brief
-    python main.py generate --format institutional-analysis  
-    python main.py generate --format macro-outlook
+    python main.py test-newsletter tech ai     # Send test newsletter to shrivu1122@gmail.com
     
-    # Email newsletters
-    python main.py email --format macro-outlook
-    python main.py email --subject "Weekly Market Update" --limit 20
-    python main.py test-email                      # Test email configuration
-    
-Environment Variables:
-    OPENAI_API_KEY       - Required for AI newsletter generation
-    POLYMARKET_SECRET_KEY - Optional, may be needed for some API calls
-    POSTMARK_API_KEY     - Required for email functionality
-    TO_EMAILS            - Comma-separated list of email addresses for newsletters
+    python main.py list-newsletters            # List all archived newsletters
+    python main.py list-newsletters --topics tech ai # List newsletters for specific topics
+    python main.py delete-newsletter 123      # Delete newsletter with ID 123
         """
     )
     
     # Subcommands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     
-    # Generate command
-    gen_parser = subparsers.add_parser('generate', help='Generate full newsletter')
-    gen_parser.add_argument('--output', '-o', type=str, help='Output filename')
-    gen_parser.add_argument('--min-volume', type=float, default=10000, 
-                           help='Minimum market volume (default: 10000)')
-    gen_parser.add_argument('--min-change', type=float, default=3.0,
-                           help='Minimum price change %% (default: 3.0)')
-    gen_parser.add_argument('--max-markets', type=int, default=10000,
-                           help='Maximum markets to include (default: 10000)')
-    gen_parser.add_argument('--hours', type=int, default=24,
-                           help='Hours of history to analyze (default: 24)')
-    gen_parser.add_argument('--limit', type=int, 
-                           help='Limit number of markets to fetch for testing')
-    gen_parser.add_argument('--format', type=str, default='institutional-analysis',
-                           choices=list(NEWSLETTER_FORMATS.keys()),
-                           help='Newsletter format (default: institutional-analysis)')
+    # Web server command
+    web_parser = subparsers.add_parser('web', help='Start the web server')
+    web_parser.add_argument('--port', type=int, default=8080, help='Port to run the server on (default: 8080)')
+    web_parser.add_argument('--reload', action='store_true', help='Enable auto-reload for development')
     
-    # Email command
-    email_parser = subparsers.add_parser('email', help='Generate and email newsletter')
-    email_parser.add_argument('--output', '-o', type=str, help='Output filename')
-    email_parser.add_argument('--subject', '-s', type=str, help='Email subject line')
-    email_parser.add_argument('--min-volume', type=float, default=10000, 
-                             help='Minimum market volume (default: 10000)')
-    email_parser.add_argument('--min-change', type=float, default=3.0,
-                             help='Minimum price change %% (default: 3.0)')
-    email_parser.add_argument('--max-markets', type=int, default=10000,
-                             help='Maximum markets to include (default: 10000)')
-    email_parser.add_argument('--hours', type=int, default=24,
-                             help='Hours of history to analyze (default: 24)')
-    email_parser.add_argument('--limit', type=int, 
-                             help='Limit number of markets to fetch for testing')
-    email_parser.add_argument('--format', type=str, default='institutional-analysis',
-                             choices=list(NEWSLETTER_FORMATS.keys()),
-                             help='Newsletter format (default: institutional-analysis)')
+    # Manual newsletter trigger command
+    newsletter_parser = subparsers.add_parser('newsletter', help='Manually trigger newsletter generation and sending')
+    newsletter_parser.add_argument('topics', nargs='+', help='Topics to generate newsletter for (space-separated)')
+    newsletter_parser.add_argument('--dry-run', action='store_true', help='Generate but do not send emails')
+    newsletter_parser.add_argument('--save-only', action='store_true', help='Generate and save to file only, no emails or archiving')
     
-    # Summary command  
-    sum_parser = subparsers.add_parser('summary', help='Show quick market summary')
-    sum_parser.add_argument('--min-volume', type=float, default=10000,
-                           help='Minimum market volume (default: 10000)')
-    sum_parser.add_argument('--min-change', type=float, default=3.0,
-                           help='Minimum price change %% (default: 3.0)')
-    sum_parser.add_argument('--hours', type=int, default=24,
-                           help='Hours of history to analyze (default: 24)')
-    sum_parser.add_argument('--limit', type=int,
-                           help='Limit number of markets to fetch for testing')
+    # Test newsletter command
+    test_newsletter_parser = subparsers.add_parser('test-newsletter', help='Generate and send newsletter to test email')
+    test_newsletter_parser.add_argument('topics', nargs='+', help='Topics to generate newsletter for (space-separated)')
+    test_newsletter_parser.add_argument('--test-email', default='shrivu1122@gmail.com', help='Test email address (default: shrivu1122@gmail.com)')
     
-    # Search command
-    search_parser = subparsers.add_parser('search', help='Search and analyze specific markets')
-    search_parser.add_argument('term', type=str, help='Search term for market questions')
-    search_parser.add_argument('--hours', type=int, default=24,
-                              help='Hours of history to analyze (default: 24)')
+    # List newsletters command
+    list_parser = subparsers.add_parser('list-newsletters', help='List archived newsletters')
+    list_parser.add_argument('--topics', nargs='*', help='Filter by topics (space-separated)')
+    list_parser.add_argument('--limit', type=int, default=20, help='Maximum newsletters to show (default: 20)')
     
-    # Config command
-    config_parser = subparsers.add_parser('config', help='Show current configuration')
-    
-    # Test email command
-    test_email_parser = subparsers.add_parser('test-email', help='Send test email to all configured recipients')
-    test_email_parser.add_argument('--subject', '-s', type=str, help='Test email subject line')
+    # Delete newsletter command
+    delete_parser = subparsers.add_parser('delete-newsletter', help='Delete archived newsletter by ID')
+    delete_parser.add_argument('id', type=int, help='Newsletter ID to delete')
+    delete_parser.add_argument('--confirm', action='store_true', help='Skip confirmation prompt')
     
     # Parse arguments
     args = parser.parse_args()
@@ -119,122 +71,270 @@ Environment Variables:
         parser.print_help()
         sys.exit(1)
     
-    # Check API key for AI commands
-    if args.command in ['generate', 'email'] and not os.getenv('OPENAI_API_KEY'):
-        print("❌ Error: OPENAI_API_KEY environment variable not set")
-        print("   Please run: source env.sh")
-        sys.exit(1)
-    
-    # Check email configuration for email commands
-    if args.command in ['email', 'test-email']:
-        if not os.getenv('POSTMARK_API_KEY'):
-            print("❌ Error: POSTMARK_API_KEY environment variable not set")
-            print("   Please set POSTMARK_API_KEY in env.sh")
-            sys.exit(1)
-        if not os.getenv('TO_EMAILS'):
-            print("❌ Error: TO_EMAILS environment variable not set")
-            print("   Please set TO_EMAILS in env.sh (comma-separated list)")
-            sys.exit(1)
-    
     try:
-        # Execute commands
-        if args.command == 'generate':
-            generator = MarketNewsletterGenerator(
-                min_volume=args.min_volume,
-                min_change_pct=args.min_change,
-                max_markets=args.max_markets,
-                hours_back=args.hours,
-                market_limit=args.limit,
-                format_type=args.format
+        if args.command == 'web':
+            print("🌐 Starting The Reality Index web application...")
+            print(f"   Port: {args.port}")
+            print(f"   Reload: {'Enabled' if args.reload else 'Disabled'}")
+            print()
+            
+            import uvicorn
+            from backend.api import app
+            
+            uvicorn.run("backend.api:app", host="0.0.0.0", port=args.port, reload=args.reload)
+            
+        elif args.command == 'newsletter':
+            from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
+            from market_analyzer.topic_config import get_topic_keys, get_display_name
+            
+            # Validate topics
+            valid_topics = get_topic_keys()
+            invalid_topics = [t for t in args.topics if t not in valid_topics]
+            if invalid_topics:
+                print(f"❌ Invalid topics: {invalid_topics}")
+                print(f"   Valid topics: {valid_topics}")
+                sys.exit(1)
+            
+            # Sort topics for consistency
+            topics = sorted(args.topics)
+            topic_names = [get_display_name(topic) for topic in topics]
+            
+            print(f"📰 Manual newsletter generation")
+            print(f"   Topics: {' + '.join(topic_names)}")
+            print(f"   Mode: {'Dry run (no emails)' if args.dry_run else 'Save only (no emails/archive)' if args.save_only else 'Full generation and sending'}")
+            print()
+            
+            # Create generator
+            generator = SubscriptionNewsletterGenerator(
+                min_volume=10000,
+                min_change_pct=2.0,
+                max_markets=10000,
+                hours_back=168,  # 7 days
             )
             
-            print(f"🚀 Generating newsletter with settings:")
-            print(f"   Format: {args.format}")
-            print(f"   Min volume: ${args.min_volume:,.0f}")
-            print(f"   Min change: {args.min_change}%")
-            print(f"   Max markets: {args.max_markets}")
-            print(f"   Time window: {args.hours} hours")
-            print()
-            
-            output_path = generator.generate_newsletter(args.output)
-            
-            if output_path:
-                print(f"🎉 Newsletter generated successfully!")
-                print(f"📁 Location: {output_path}")
-        
-        elif args.command == 'email':
-            generator = MarketNewsletterGenerator(
-                min_volume=args.min_volume,
-                min_change_pct=args.min_change,
-                max_markets=args.max_markets,
-                hours_back=args.hours,
-                market_limit=args.limit,
-                format_type=args.format
-            )
-            
-            print(f"📧 Generating and emailing newsletter with settings:")
-            print(f"   Format: {args.format}")
-            print(f"   Min volume: ${args.min_volume:,.0f}")
-            print(f"   Min change: {args.min_change}%")
-            print(f"   Max markets: {args.max_markets}")
-            print(f"   Time window: {args.hours} hours")
-            if args.subject:
-                print(f"   Subject: {args.subject}")
-            print()
-            
-            results = generator.generate_and_email_newsletter(args.output, args.subject)
-            
-            if results["newsletter_path"]:
-                print(f"📁 Newsletter also saved to: {results['newsletter_path']}")
-        
-        elif args.command == 'test-email':
-            generator = MarketNewsletterGenerator()
-            
-            print("🧪 Testing email configuration...")
-            if args.subject:
-                print(f"   Subject: {args.subject}")
-            print()
-            
-            results = generator.send_test_email(args.subject)
-            
-        elif args.command == 'summary':
-            generator = MarketNewsletterGenerator(
-                min_volume=args.min_volume,
-                min_change_pct=args.min_change,
-                hours_back=args.hours,
-                market_limit=args.limit
-            )
-            generator.print_summary()
-            
-        elif args.command == 'search':
-            generator = MarketNewsletterGenerator(hours_back=args.hours)
-            generator.analyze_specific_market(args.term)
-            
-        elif args.command == 'config':
-            generator = MarketNewsletterGenerator()
-            config = generator.get_config_summary()
-            
-            print("⚙️  CURRENT CONFIGURATION")
-            print("═" * 30)
-            print(f"Min Volume: ${config['min_volume']:,.0f}")
-            print(f"Min Change: {config['min_change_pct']}%")
-            print(f"Max Markets: {config['max_markets']}")
-            print(f"Time Window: {config['hours_back']} hours")
-            print(f"Output Dir: {config['output_dir']}")
-            print()
-            print("Environment:")
-            print(f"OpenAI API: {'✅ Set' if os.getenv('OPENAI_API_KEY') else '❌ Missing'}")
-            print(f"Polymarket Key: {'✅ Set' if os.getenv('POLYMARKET_SECRET_KEY') else '❌ Missing'}")
-            print(f"Postmark API: {'✅ Set' if os.getenv('POSTMARK_API_KEY') else '❌ Missing'}")
-            
-            if config.get('email_configured'):
-                print(f"Email Recipients: {config.get('email_recipients', 0)}")
-                if config.get('email_addresses'):
-                    print("Email Addresses:")
-                    for email in config.get('email_addresses', []):
-                        print(f"  • {email}")
+            if args.save_only:
+                # Generate and save to file only
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+                filename = f"manual_newsletter_{'_'.join(topics)}_{timestamp}.md"
+                content = generator.generate_newsletter_for_topics(topics, filename)
+                print(f"✅ Newsletter saved to newsletters/{filename}")
+                
             else:
-                print("Email: ❌ Not configured (set POSTMARK_API_KEY and TO_EMAILS)")
+                # Create a fake subscriber list or get real ones
+                if args.dry_run:
+                    print("🧪 Dry run mode - generating content without sending emails...")
+                    content = generator.generate_newsletter_for_topics(topics)
+                    if content:
+                        print("✅ Newsletter generated successfully!")
+                        print(f"📝 Content preview: {len(content)} characters")
+                    else:
+                        print("❌ Failed to generate newsletter content")
+                else:
+                    # Get real subscribers for this topic combination
+                    from backend.database.database import get_db_session
+                    from backend.database.models import Subscription
+                    
+                    with get_db_session() as db:
+                        subscribers = generator.get_subscribers_for_topics(topics)
+                        
+                    if not subscribers:
+                        print(f"⚠️  No subscribers found for topics: {topic_names}")
+                        print("   Newsletter will be generated but no emails will be sent")
+                        content = generator.generate_newsletter_for_topics(topics)
+                        if content:
+                            print("✅ Newsletter generated successfully (no subscribers to email)")
+                    else:
+                        print(f"📧 Found {len(subscribers)} subscribers")
+                        
+                        # Generate newsletter content
+                        newsletter_content = generator.generate_newsletter_for_topics(topics)
+                        
+                        if not newsletter_content:
+                            print("❌ Failed to generate newsletter content")
+                            sys.exit(1)
+                        
+                        # Send emails
+                        from market_analyzer.subscription_email_sender import SubscriptionEmailSender
+                        email_sender = SubscriptionEmailSender()
+                        
+                        email_results = email_sender.send_newsletter_to_subscribers(
+                            newsletter_content, 
+                            subscribers,
+                            topics
+                        )
+                        
+                        print(f"✅ Newsletter sent!")
+                        print(f"   📧 Emails sent: {email_results['successful_sends']}")
+                        print(f"   ❌ Failed sends: {email_results['failed_sends']}")
+                        
+                        # Archive the newsletter
+                        if email_results["successful_sends"] > 0:
+                            from backend.database.database import get_db_session
+                            from backend.database.models import NewsletterArchive
+                            
+                            title = f"The Reality Index: {' + '.join(topic_names)} Weekly Update"
+                            html_content = email_sender.markdown_to_html(newsletter_content, "")
+                            
+                            with get_db_session() as db:
+                                NewsletterArchive.create(
+                                    db=db,
+                                    topics=topics,
+                                    title=title,
+                                    content_html=html_content,
+                                    content_markdown=newsletter_content,
+                                    subscriber_count=email_results["successful_sends"]
+                                )
+                            
+                            print("📁 Newsletter archived to database")
+        
+        elif args.command == 'test-newsletter':
+            from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
+            from market_analyzer.subscription_email_sender import SubscriptionEmailSender
+            from market_analyzer.topic_config import get_topic_keys, get_display_name
+            from backend.database.database import get_db_session
+            from backend.database.models import NewsletterArchive, Subscription
+            
+            # Validate topics
+            valid_topics = get_topic_keys()
+            invalid_topics = [t for t in args.topics if t not in valid_topics]
+            if invalid_topics:
+                print(f"❌ Invalid topics: {invalid_topics}")
+                print(f"   Valid topics: {valid_topics}")
+                sys.exit(1)
+            
+            # Sort topics for consistency
+            topics = sorted(args.topics)
+            topic_names = [get_display_name(topic) for topic in topics]
+            
+            print(f"🧪 Test newsletter generation and sending")
+            print(f"   Topics: {' + '.join(topic_names)}")
+            print(f"   Test email: {args.test_email}")
+            print()
+            
+            # Create generator
+            generator = SubscriptionNewsletterGenerator(
+                min_volume=10000,
+                min_change_pct=2.0,
+                max_markets=10000,
+                hours_back=168,  # 7 days
+            )
+            
+            # Generate newsletter content
+            newsletter_content = generator.generate_newsletter_for_topics(topics)
+            
+            if not newsletter_content:
+                print("❌ Failed to generate newsletter content")
+                sys.exit(1)
+            
+            print("✅ Newsletter content generated successfully")
+            
+            # Create a fake subscriber for the test email
+            class TestSubscriber:
+                def __init__(self, email, topics, token):
+                    self.email = email
+                    self.topics = topics
+                    self.unsubscribe_token = token
+            
+            test_subscriber = TestSubscriber(args.test_email, topics, "test-token-123")
+            
+            # Send email
+            email_sender = SubscriptionEmailSender()
+            email_results = email_sender.send_newsletter_to_subscribers(
+                newsletter_content,
+                [test_subscriber],
+                topics
+            )
+            
+            print(f"📧 Email results:")
+            print(f"   ✅ Successful: {email_results['successful_sends']}")
+            print(f"   ❌ Failed: {email_results['failed_sends']}")
+            
+            if email_results['failed_sends'] > 0:
+                for result in email_results['results']:
+                    if result['status'] == 'failed':
+                        print(f"   Error: {result['error']}")
+            
+            # Save to archive
+            if email_results["successful_sends"] > 0:
+                title = f"The Reality Index: {' + '.join(topic_names)} Weekly Update"
+                html_content = email_sender.markdown_to_html(newsletter_content, "")
+                
+                with get_db_session() as db:
+                    NewsletterArchive.create(
+                        db=db,
+                        topics=topics,
+                        title=title,
+                        content_html=html_content,
+                        content_markdown=newsletter_content,
+                        subscriber_count=1  # Test email count
+                    )
+                
+                print("📁 Newsletter archived to database")
+                print(f"✅ Test complete! Newsletter sent to {args.test_email} and archived")
+            else:
+                print("❌ Test failed - newsletter not sent or archived")
+        
+        elif args.command == 'list-newsletters':
+            from backend.database.database import get_db_session
+            from backend.database.models import NewsletterArchive
+            from market_analyzer.topic_config import get_display_name
+            
+            print("📰 Archived Newsletters")
+            print("═" * 50)
+            
+            with get_db_session() as db:
+                if args.topics:
+                    # Filter by specific topics
+                    newsletters = NewsletterArchive.get_by_topics(db, sorted(args.topics), args.limit)
+                    topic_names = [get_display_name(topic) for topic in sorted(args.topics)]
+                    print(f"Showing newsletters for: {' + '.join(topic_names)}")
+                else:
+                    # Show all newsletters
+                    newsletters = NewsletterArchive.get_all_recent(db, args.limit)
+                    print("Showing all newsletters")
+                
+                print(f"Found {len(newsletters)} newsletters:")
+                print()
+                
+                if not newsletters:
+                    print("No newsletters found.")
+                else:
+                    for newsletter in newsletters:
+                        topic_names = [get_display_name(topic) for topic in newsletter.topics]
+                        print(f"ID: {newsletter.id}")
+                        print(f"Title: {newsletter.title}")
+                        print(f"Topics: {' + '.join(topic_names)}")
+                        print(f"Sent: {newsletter.sent_at.strftime('%Y-%m-%d %H:%M:%S')}")
+                        print(f"Subscribers: {newsletter.subscriber_count}")
+                        print("-" * 40)
+        
+        elif args.command == 'delete-newsletter':
+            from backend.database.database import get_db_session
+            from backend.database.models import NewsletterArchive
+            
+            with get_db_session() as db:
+                newsletter = db.query(NewsletterArchive).filter(NewsletterArchive.id == args.id).first()
+                
+                if not newsletter:
+                    print(f"❌ Newsletter with ID {args.id} not found")
+                    sys.exit(1)
+                
+                print(f"📰 Newsletter to delete:")
+                print(f"   ID: {newsletter.id}")
+                print(f"   Title: {newsletter.title}")
+                print(f"   Topics: {newsletter.topics}")
+                print(f"   Sent: {newsletter.sent_at}")
+                print(f"   Subscribers: {newsletter.subscriber_count}")
+                print()
+                
+                if args.confirm:
+                    # Skip confirmation prompt
+                    db.delete(newsletter)
+                    db.commit()
+                    print(f"✅ Newsletter {args.id} deleted successfully")
+                else:
+                    print("❌ Interactive confirmation not supported in this environment.")
+                    print(f"   Use --confirm flag to delete: python main.py delete-newsletter {args.id} --confirm")
             
     except KeyboardInterrupt:
         print("\n👋 Operation cancelled by user")

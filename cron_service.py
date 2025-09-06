@@ -9,7 +9,7 @@ import time
 import schedule
 import logging
 from datetime import datetime
-from market_analyzer.newsletter_generator import MarketNewsletterGenerator
+from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
 
 # Configure logging
 logging.basicConfig(
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def validate_environment():
     """Validate required environment variables"""
-    required_vars = ['OPENAI_API_KEY', 'POSTMARK_API_KEY', 'TO_EMAILS']
+    required_vars = ['OPENAI_API_KEY', 'POSTMARK_API_KEY', 'DATABASE_URL']
     
     for var in required_vars:
         if not os.getenv(var):
@@ -36,59 +36,40 @@ def validate_environment():
     return True
 
 def send_newsletter():
-    """Generate and send the weekly tech newsletter"""
+    """Generate and send subscription-based newsletters"""
     try:
-        logger.info("🚀 Starting weekly tech newsletter generation...")
+        logger.info("🚀 Starting subscription-based newsletter generation...")
         
-        # Create newsletter generator with weekly parameters
-        generator = MarketNewsletterGenerator(
+        # Create subscription newsletter generator with weekly parameters
+        generator = SubscriptionNewsletterGenerator(
             min_volume=10000,      # Default volume threshold
-            min_change_pct=2.0,    # Default change threshold  
+            min_change_pct=2.0,    # Lower threshold for weekly newsletters
             max_markets=10000,     # Allow all markets
             hours_back=168,        # 7 days (168 hours)
-            format_type="tech-outlook"
         )
         
-        # Generate and email newsletter
-        results = generator.generate_and_email_newsletter()
+        # Generate and send newsletters for all subscription combinations
+        results = generator.generate_and_send_all_newsletters()
         
-        if results["email_results"]["successful_sends"] > 0:
-            logger.info(f"✅ Tech newsletter sent successfully to {results['email_results']['successful_sends']} recipients")
-        else:
-            logger.error(f"❌ Tech newsletter failed to send to all recipients")
-            
+        if "error" in results:
+            logger.error(f"❌ Newsletter generation failed: {results['error']}")
+            return False
+        
+        logger.info(f"✅ Newsletter generation complete!")
+        logger.info(f"   📰 Topic combinations processed: {results['total_combinations']}")
+        logger.info(f"   📧 Total emails sent: {results['total_emails_sent']}")
+        
+        # Log details for each combination
+        for result in results['results']:
+            if 'error' in result:
+                logger.error(f"   ❌ {result['topics']}: {result['error']}")
+            else:
+                logger.info(f"   ✅ {result['topics']}: {result['subscriber_count']} subscribers, {result['email_results']['successful_sends']} sent")
+        
         return True
         
     except Exception as e:
-        logger.error(f"❌ Tech newsletter generation failed: {str(e)}")
-        return False
-
-def send_investments_newsletter():
-    """Generate and send the weekly investments newsletter"""
-    try:
-        logger.info("📈 Starting weekly investments newsletter generation...")
-        
-        # Create newsletter generator with weekly parameters
-        generator = MarketNewsletterGenerator(
-            min_volume=10000,      # Default volume threshold
-            min_change_pct=2.0,    # Default change threshold  
-            max_markets=10000,     # Allow all markets
-            hours_back=168,        # 7 days (168 hours)
-            format_type="stock-predictions"
-        )
-        
-        # Generate and email newsletter
-        results = generator.generate_and_email_newsletter()
-        
-        if results["email_results"]["successful_sends"] > 0:
-            logger.info(f"✅ Investments newsletter sent successfully to {results['email_results']['successful_sends']} recipients")
-        else:
-            logger.error(f"❌ Investments newsletter failed to send to all recipients")
-            
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Investments newsletter generation failed: {str(e)}")
+        logger.error(f"❌ Newsletter generation failed: {str(e)}")
         return False
 
 def send_test_email():
@@ -96,15 +77,9 @@ def send_test_email():
     try:
         logger.info("🧪 Sending startup test email...")
         
-        generator = MarketNewsletterGenerator()
-        results = generator.send_test_email("Polymarket Newsletter Service - Weekly Job Active")
-        
-        if results["successful_sends"] > 0:
-            logger.info("✅ Test email sent successfully")
-            return True
-        else:
-            logger.error("❌ Test email failed")
-            return False
+        # For now, skip test email as we're using subscription-based sending
+        logger.info("✅ Skipping test email - using subscription-based system")
+        return True
             
     except Exception as e:
         logger.error(f"❌ Test email failed: {str(e)}")
@@ -121,14 +96,10 @@ def main():
     
     # Skip startup test email - service is ready
     
-    # Schedule the tech newsletter for every Friday at 6 PM PST
+    # Schedule the subscription-based newsletter for every Friday at 6 PM PST
     schedule.every().friday.at("18:00").do(send_newsletter)
     
-    # Schedule the investments newsletter for every Friday at 6:15 PM PST
-    schedule.every().friday.at("18:15").do(send_investments_newsletter)
-    
-    logger.info("⏰ Tech newsletter scheduled for every Friday at 6:00 PM PST")
-    logger.info("⏰ Investments newsletter scheduled for every Friday at 6:15 PM PST")
+    logger.info("⏰ Subscription newsletter scheduled for every Friday at 6:00 PM PST")
     logger.info("🔄 Cron service running... (press Ctrl+C to stop)")
     
     # Keep the service running
