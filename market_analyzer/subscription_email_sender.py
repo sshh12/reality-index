@@ -1,4 +1,5 @@
 import os
+import re
 import markdown
 from postmarker.core import PostmarkClient
 from typing import List, Optional, Dict
@@ -24,7 +25,6 @@ class SubscriptionEmailSender:
     
     def ensure_section_titles_bolded(self, markdown_content: str) -> str:
         """Ensure section titles like 'THE MARKET MOVES:', 'MARKET MOVES:', etc. are properly bolded"""
-        import re
         
         # Common section patterns that should be bolded
         section_patterns = [

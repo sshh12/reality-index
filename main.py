@@ -9,7 +9,20 @@ Usage:
 import argparse
 import sys
 import os
+import uvicorn
 from datetime import datetime
+
+# Backend imports
+from backend.api import app
+from backend.database.database import get_db_session
+from backend.database.models import Subscription, NewsletterArchive
+
+# Market analyzer imports  
+from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
+from market_analyzer.subscription_email_sender import SubscriptionEmailSender
+from market_analyzer.topic_config import get_topic_keys, get_display_name, get_prompt_context_for_topics
+from market_analyzer.openai_client import NewsletterAI
+from market_analyzer.newsletter_formats import DEVELOPER_INSTRUCTIONS
 
 
 def main():
@@ -87,14 +100,10 @@ Examples:
             print(f"   Reload: {'Enabled' if args.reload else 'Disabled'}")
             print()
             
-            import uvicorn
-            from backend.api import app
             
             uvicorn.run("backend.api:app", host="0.0.0.0", port=args.port, reload=args.reload)
             
         elif args.command == 'newsletter':
-            from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
-            from market_analyzer.topic_config import get_topic_keys, get_display_name
             
             # Validate topics
             valid_topics = get_topic_keys()
@@ -139,8 +148,6 @@ Examples:
                         print("❌ Failed to generate newsletter content")
                 else:
                     # Get real subscribers for this topic combination
-                    from backend.database.database import get_db_session
-                    from backend.database.models import Subscription
                     
                     with get_db_session() as db:
                         subscribers = generator.get_subscribers_for_topics(topics)
@@ -162,7 +169,6 @@ Examples:
                             sys.exit(1)
                         
                         # Send emails
-                        from market_analyzer.subscription_email_sender import SubscriptionEmailSender
                         email_sender = SubscriptionEmailSender()
                         
                         email_results = email_sender.send_newsletter_to_subscribers(
@@ -177,8 +183,6 @@ Examples:
                         
                         # Archive the newsletter
                         if email_results["successful_sends"] > 0:
-                            from backend.database.database import get_db_session
-                            from backend.database.models import NewsletterArchive
                             
                             title = f"The Reality Index: {' + '.join(topic_names)} Weekly Update"
                             html_content = email_sender.markdown_to_html(newsletter_content, "")
@@ -196,11 +200,6 @@ Examples:
                             print("📁 Newsletter archived to database")
         
         elif args.command == 'test-newsletter':
-            from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
-            from market_analyzer.subscription_email_sender import SubscriptionEmailSender
-            from market_analyzer.topic_config import get_topic_keys, get_display_name
-            from backend.database.database import get_db_session
-            from backend.database.models import NewsletterArchive, Subscription
             
             # Validate topics
             valid_topics = get_topic_keys()
@@ -282,9 +281,6 @@ Examples:
                 print("❌ Test failed - newsletter not sent or archived")
         
         elif args.command == 'list-newsletters':
-            from backend.database.database import get_db_session
-            from backend.database.models import NewsletterArchive
-            from market_analyzer.topic_config import get_display_name
             
             print("📰 Archived Newsletters")
             print("═" * 50)
@@ -316,8 +312,6 @@ Examples:
                         print("-" * 40)
         
         elif args.command == 'delete-newsletter':
-            from backend.database.database import get_db_session
-            from backend.database.models import NewsletterArchive
             
             with get_db_session() as db:
                 newsletter = db.query(NewsletterArchive).filter(NewsletterArchive.id == args.id).first()
@@ -344,9 +338,6 @@ Examples:
                     print(f"   Use --confirm flag to delete: python main.py delete-newsletter {args.id} --confirm")
         
         elif args.command == 'test-prompt':
-            from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
-            from market_analyzer.topic_config import get_topic_keys, get_display_name, get_prompt_context_for_topics
-            from market_analyzer.openai_client import NewsletterAI
             
             # Validate topics
             valid_topics = get_topic_keys()
@@ -412,7 +403,6 @@ Please emphasize insights and analysis that align with these topic areas while m
                 full_prompt = base_prompt
             
             # Get enhanced instructions
-            from market_analyzer.newsletter_formats import DEVELOPER_INSTRUCTIONS
             enhanced_instructions = f"""{DEVELOPER_INSTRUCTIONS}
 
 TOPIC FOCUS: {topic_context}
@@ -441,7 +431,6 @@ When analyzing the market data, prioritize insights that align with the subscrib
             print(f"🎯 Topic context: {topic_context[:100]}..." if len(topic_context) > 100 else f"🎯 Topic context: {topic_context}")
         
         elif args.command == 'sanity-check':
-            from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
             
             print(f"🔍 Running price change sanity check...")
             print(f"📊 Sample size: {args.sample_size} markets")

@@ -2,6 +2,7 @@ import os
 from openai import OpenAI
 from typing import Dict
 from .newsletter_formats import DEVELOPER_INSTRUCTIONS, NEWSLETTER_TEMPLATE
+from .topic_config import get_display_name
 
 class NewsletterAI:
     def __init__(self):
@@ -88,7 +89,6 @@ When analyzing the market data, prioritize insights that align with the subscrib
             total_markets = summary_stats.get("total_markets_analyzed", 0)
             
             # Include topics in footer if provided
-            from .topic_config import get_display_name
             footer_parts = [f"Generated: {timestamp}", f"{total_markets} markets analyzed"]
             
             if topics:

@@ -4,17 +4,20 @@ FastAPI backend for newsletter subscription management
 """
 
 import re
-from typing import List, Optional
 import os
+import uvicorn
+from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, EmailStr, Field, validator
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import Text
 
 from backend.database.database import get_database, init_database
 from backend.database.models import Subscription, NewsletterArchive
 from market_analyzer.topic_config import TOPICS, get_topic_keys, get_topic_descriptions, get_topic_display_names
+from market_analyzer.subscription_email_sender import SubscriptionEmailSender
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -123,7 +126,6 @@ async def subscribe(
             
             # Send confirmation email
             try:
-                from market_analyzer.subscription_email_sender import SubscriptionEmailSender
                 email_sender = SubscriptionEmailSender()
                 email_sender.send_confirmation_email(email, topics, subscription.unsubscribe_token)
             except Exception as e:
@@ -319,7 +321,7 @@ async def get_subscription_stats(db: Session = Depends(get_database)):
         for topic in VALID_TOPICS:
             count = db.query(Subscription).filter(
                 Subscription.active == True,
-                Subscription.topics.cast(str).contains(topic)
+                Subscription.topics.cast(Text).contains(f'"{topic}"')
             ).count()
             topic_stats[topic] = count
         
@@ -339,5 +341,4 @@ async def get_subscription_stats(db: Session = Depends(get_database)):
 # This FastAPI app only handles API endpoints
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080)

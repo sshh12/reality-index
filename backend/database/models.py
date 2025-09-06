@@ -1,4 +1,5 @@
 import uuid
+import json
 from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, UniqueConstraint
@@ -46,9 +47,10 @@ class Subscription(Base):
     def get_by_email_and_topics(cls, db: Session, email: str, topics: List[str]) -> Optional["Subscription"]:
         """Get subscription by email and specific topic combination"""
         sorted_topics = sorted(topics)
+        topics_json = json.dumps(sorted_topics)
         return db.query(cls).filter(
             cls.email == email.lower().strip(),
-            cls.topics == sorted_topics
+            cls.topics.cast(Text) == topics_json
         ).first()
 
     @classmethod
@@ -70,9 +72,10 @@ class Subscription(Base):
     def get_subscriptions_by_topics(cls, db: Session, topics: List[str]) -> List["Subscription"]:
         """Get active subscriptions for specific topic combination"""
         sorted_topics = sorted(topics)
+        topics_json = json.dumps(sorted_topics)
         return db.query(cls).filter(
             cls.active == True,
-            cls.topics == sorted_topics
+            cls.topics.cast(Text) == topics_json
         ).all()
 
     def unsubscribe(self, db: Session):
@@ -127,7 +130,6 @@ class NewsletterArchive(Base):
     @classmethod
     def get_by_topics(cls, db: Session, topics: List[str], limit: int = 10) -> List["NewsletterArchive"]:
         """Get recent newsletters for specific topic combination"""
-        import json
         sorted_topics = sorted(topics)
         topics_json = json.dumps(sorted_topics)
         return db.query(cls).filter(

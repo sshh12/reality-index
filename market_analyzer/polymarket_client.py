@@ -1,6 +1,7 @@
 import requests
-from datetime import datetime, timedelta
+import json
 import time
+from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 
 
@@ -41,7 +42,6 @@ class PolymarketClient:
                     tokens = []
                     if "clobTokenIds" in market and market["clobTokenIds"]:
                         try:
-                            import json
                             clob_token_ids = json.loads(market["clobTokenIds"])
                             outcomes = json.loads(market.get("outcomes", '["Yes", "No"]'))
                             for i, token_id in enumerate(clob_token_ids):
@@ -237,7 +237,6 @@ class PolymarketClient:
             # Try to extract prices from outcomePrices
             try:
                 if "outcomePrices" in market and market["outcomePrices"]:
-                    import json
                     outcome_prices = json.loads(market["outcomePrices"])
                     outcomes = json.loads(market.get("outcomes", '["Yes", "No"]'))
                     # Find the Yes token price
