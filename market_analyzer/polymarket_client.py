@@ -259,19 +259,16 @@ class PolymarketClient:
             # Calculate historical price based on available price change data
             price_change_pct = 0
             
-            # Try different time periods
-            if market.get("oneDayPriceChange"):
-                historical_price = current_yes_price - float(market["oneDayPriceChange"])
-                if historical_price > 0:
-                    price_change_pct = (float(market["oneDayPriceChange"]) / historical_price) * 100
-            elif market.get("oneWeekPriceChange"):
-                historical_price = current_yes_price - float(market["oneWeekPriceChange"])
-                if historical_price > 0:
-                    price_change_pct = (float(market["oneWeekPriceChange"]) / historical_price) * 100
-            elif market.get("oneMonthPriceChange"):
-                historical_price = current_yes_price - float(market["oneMonthPriceChange"])
-                if historical_price > 0:
-                    price_change_pct = (float(market["oneMonthPriceChange"]) / historical_price) * 100
+            # Use ONLY 1-week price changes for consistency in weekly analysis
+            # Skip markets that don't have 1-week data to maintain data integrity
+            if not market.get("oneWeekPriceChange"):
+                continue
+                
+            historical_price = current_yes_price - float(market["oneWeekPriceChange"])
+            if historical_price > 0:
+                price_change_pct = (float(market["oneWeekPriceChange"]) / historical_price) * 100
+            else:
+                continue
             
             # If we have no historical data, skip this market
             if historical_price is None or abs(price_change_pct) < 0.1:

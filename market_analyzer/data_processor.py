@@ -65,7 +65,7 @@ class MarketDataProcessor:
             "raw_change": change_pct
         }
     
-    def create_newsletter_data(self, markets: List[Dict]) -> Dict:
+    def create_newsletter_data(self, markets: List[Dict], hours_back: int = 24) -> Dict:
         """Create structured data for newsletter generation"""
         # Rank markets by significance
         top_markets = self.rank_by_significance(markets)
@@ -99,7 +99,7 @@ class MarketDataProcessor:
             "losers": losers[:5],   # Top 5 losers
             "by_category": categorized,
             "config": {
-                "hours_analyzed": 24,
+                "hours_analyzed": hours_back,
                 "min_volume": self._format_volume(self.min_volume),
                 "min_change_threshold": f"{self.min_change_pct}%"
             }

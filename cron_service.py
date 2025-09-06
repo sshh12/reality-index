@@ -40,12 +40,12 @@ def send_newsletter():
     try:
         logger.info("🚀 Starting subscription-based newsletter generation...")
         
-        # Create subscription newsletter generator with weekly parameters
+        # Create subscription newsletter generator (now hard-coded to 7 days)
         generator = SubscriptionNewsletterGenerator(
             min_volume=10000,      # Default volume threshold
             min_change_pct=2.0,    # Lower threshold for weekly newsletters
-            max_markets=10000,     # Allow all markets
-            hours_back=168,        # 7 days (168 hours)
+            max_markets=10000      # Allow all markets
+            # hours_back is now hard-coded to 168 hours (7 days)
         )
         
         # Generate and send newsletters for all subscription combinations

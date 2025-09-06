@@ -63,6 +63,15 @@ Examples:
     delete_parser.add_argument('id', type=int, help='Newsletter ID to delete')
     delete_parser.add_argument('--confirm', action='store_true', help='Skip confirmation prompt')
     
+    # Test prompt command
+    prompt_parser = subparsers.add_parser('test-prompt', help='Generate and dump AI prompt to file for testing')
+    prompt_parser.add_argument('topics', nargs='+', help='Topics to generate prompt for (space-separated)')
+    prompt_parser.add_argument('--output', default='test_prompt.txt', help='Output file for prompt (default: test_prompt.txt)')
+    
+    # Sanity check command
+    sanity_parser = subparsers.add_parser('sanity-check', help='Run sanity checks on price change calculations')
+    sanity_parser.add_argument('--sample-size', type=int, default=50, help='Number of markets to analyze (default: 50)')
+    
     # Parse arguments
     args = parser.parse_args()
     
@@ -104,12 +113,11 @@ Examples:
             print(f"   Mode: {'Dry run (no emails)' if args.dry_run else 'Save only (no emails/archive)' if args.save_only else 'Full generation and sending'}")
             print()
             
-            # Create generator
+            # Create generator (now hard-coded to 7 days)
             generator = SubscriptionNewsletterGenerator(
                 min_volume=10000,
                 min_change_pct=2.0,
-                max_markets=10000,
-                hours_back=168,  # 7 days
+                max_markets=10000
             )
             
             if args.save_only:
@@ -211,12 +219,11 @@ Examples:
             print(f"   Test email: {args.test_email}")
             print()
             
-            # Create generator
+            # Create generator (now hard-coded to 7 days)
             generator = SubscriptionNewsletterGenerator(
                 min_volume=10000,
                 min_change_pct=2.0,
-                max_markets=10000,
-                hours_back=168,  # 7 days
+                max_markets=10000
             )
             
             # Generate newsletter content
@@ -335,6 +342,218 @@ Examples:
                 else:
                     print("❌ Interactive confirmation not supported in this environment.")
                     print(f"   Use --confirm flag to delete: python main.py delete-newsletter {args.id} --confirm")
+        
+        elif args.command == 'test-prompt':
+            from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
+            from market_analyzer.topic_config import get_topic_keys, get_display_name, get_prompt_context_for_topics
+            from market_analyzer.openai_client import NewsletterAI
+            
+            # Validate topics
+            valid_topics = get_topic_keys()
+            invalid_topics = [t for t in args.topics if t not in valid_topics]
+            if invalid_topics:
+                print(f"❌ Invalid topics: {invalid_topics}")
+                print(f"   Valid topics: {valid_topics}")
+                sys.exit(1)
+            
+            # Sort topics for consistency
+            topics = sorted(args.topics)
+            topic_names = [get_display_name(topic) for topic in topics]
+            
+            print(f"🔍 Generating AI prompt for topics: {' + '.join(topic_names)}")
+            print(f"📁 Output file: {args.output}")
+            print()
+            
+            # Create generator to get the data (now hard-coded to 7 days)
+            generator = SubscriptionNewsletterGenerator(
+                min_volume=10000,
+                min_change_pct=2.0,
+                max_markets=10000
+            )
+            
+            # Get market data (same as newsletter generation)
+            all_markets = generator.polymarket.get_all_markets()
+            print(f"   Found {len(all_markets)} total markets")
+            
+            active_markets = generator.polymarket.filter_active_markets(all_markets, generator.processor.min_volume)
+            print(f"   {len(active_markets)} active markets meet criteria")
+            
+            if not active_markets:
+                print("❌ No markets meet the criteria.")
+                sys.exit(1)
+            
+            markets_with_changes = generator.polymarket.calculate_price_changes(active_markets)
+            print(f"   {len(markets_with_changes)} markets have price data")
+            
+            if not markets_with_changes:
+                print("❌ No markets have sufficient price history.")
+                sys.exit(1)
+            
+            # Process data for newsletter
+            newsletter_data = generator.processor.create_newsletter_data(markets_with_changes, generator.hours_back)
+            
+            # Get topic context
+            topic_context = get_prompt_context_for_topics(topics)
+            
+            # Create AI client and build prompt (without calling OpenAI)
+            ai = NewsletterAI()
+            
+            # Build the prompt
+            base_prompt = ai._build_newsletter_prompt(newsletter_data, "tech-outlook")
+            
+            if topic_context:
+                context_addition = f"""
+
+SUBSCRIBER TOPIC FOCUS: {topic_context}
+
+Please emphasize insights and analysis that align with these topic areas while maintaining comprehensive coverage of all significant market movements."""
+                full_prompt = base_prompt + context_addition
+            else:
+                full_prompt = base_prompt
+            
+            # Get enhanced instructions
+            from market_analyzer.newsletter_formats import DEVELOPER_INSTRUCTIONS
+            enhanced_instructions = f"""{DEVELOPER_INSTRUCTIONS}
+
+TOPIC FOCUS: {topic_context}
+
+When analyzing the market data, prioritize insights that align with the subscriber's topic interests while maintaining comprehensive coverage of all significant market movements."""
+            
+            # Write to file
+            with open(args.output, 'w', encoding='utf-8') as f:
+                f.write("# AI NEWSLETTER GENERATION PROMPT TEST\n\n")
+                f.write(f"## Configuration\n")
+                f.write(f"- Topics: {', '.join(topic_names)}\n")
+                f.write(f"- Hours analyzed: {generator.hours_back} (7 days)\n")
+                f.write(f"- Markets analyzed: {len(markets_with_changes)}\n")
+                f.write(f"- Min volume: ${generator.processor.min_volume:,}\n")
+                f.write(f"- Min change: {generator.processor.min_change_pct}%\n\n")
+                
+                f.write("## DEVELOPER INSTRUCTIONS\n\n")
+                f.write(enhanced_instructions)
+                f.write("\n\n" + "="*80 + "\n\n")
+                
+                f.write("## USER PROMPT\n\n")
+                f.write(full_prompt)
+            
+            print(f"✅ AI prompt saved to: {args.output}")
+            print(f"📊 Contains data from {len(markets_with_changes)} markets over {generator.hours_back} hours")
+            print(f"🎯 Topic context: {topic_context[:100]}..." if len(topic_context) > 100 else f"🎯 Topic context: {topic_context}")
+        
+        elif args.command == 'sanity-check':
+            from market_analyzer.subscription_newsletter_generator import SubscriptionNewsletterGenerator
+            
+            print(f"🔍 Running price change sanity check...")
+            print(f"📊 Sample size: {args.sample_size} markets")
+            print()
+            
+            # Create generator (now hard-coded to 7 days)
+            generator = SubscriptionNewsletterGenerator(
+                min_volume=5000,  # Lower threshold to get more markets
+                min_change_pct=1.0,  # Lower threshold
+                max_markets=10000
+            )
+            
+            # Get market data
+            all_markets = generator.polymarket.get_all_markets(limit=1000)
+            print(f"   📈 Fetched {len(all_markets)} markets from API")
+            
+            active_markets = generator.polymarket.filter_active_markets(all_markets, 1000)  # Lower volume filter
+            print(f"   ✅ {len(active_markets)} active markets meet criteria")
+            
+            if not active_markets:
+                print("❌ No markets available for analysis")
+                sys.exit(1)
+            
+            # Analyze the first N markets
+            sample_markets = active_markets[:args.sample_size]
+            print(f"   🔬 Analyzing sample of {len(sample_markets)} markets")
+            print()
+            
+            # Check what price change data is available
+            one_day_count = 0
+            one_week_count = 0
+            one_month_count = 0
+            no_data_count = 0
+            
+            price_period_analysis = []
+            
+            for i, market in enumerate(sample_markets):
+                market_analysis = {
+                    "question": market.get("question", "Unknown")[:60] + "...",
+                    "volume": market.get("volume", 0),
+                    "has_1day": bool(market.get("oneDayPriceChange")),
+                    "has_1week": bool(market.get("oneWeekPriceChange")), 
+                    "has_1month": bool(market.get("oneMonthPriceChange")),
+                    "1day_change": market.get("oneDayPriceChange", 0),
+                    "1week_change": market.get("oneWeekPriceChange", 0),
+                    "1month_change": market.get("oneMonthPriceChange", 0)
+                }
+                
+                # Determine which period would be used (NEW priority: 1week -> 1day -> 1month)
+                if market.get("oneWeekPriceChange"):
+                    one_week_count += 1
+                    market_analysis["used_period"] = "1week"
+                elif market.get("oneDayPriceChange"):
+                    one_day_count += 1
+                    market_analysis["used_period"] = "1day"
+                elif market.get("oneMonthPriceChange"):
+                    one_month_count += 1
+                    market_analysis["used_period"] = "1month"
+                else:
+                    no_data_count += 1
+                    market_analysis["used_period"] = "none"
+                    
+                price_period_analysis.append(market_analysis)
+            
+            print("📊 PRICE CHANGE PERIOD ANALYSIS")
+            print("="*50)
+            print(f"Using 1-day changes:   {one_day_count:3d} markets ({one_day_count/len(sample_markets)*100:.1f}%)")
+            print(f"Using 1-week changes:  {one_week_count:3d} markets ({one_week_count/len(sample_markets)*100:.1f}%)")
+            print(f"Using 1-month changes: {one_month_count:3d} markets ({one_month_count/len(sample_markets)*100:.1f}%)")
+            print(f"No price data:         {no_data_count:3d} markets ({no_data_count/len(sample_markets)*100:.1f}%)")
+            print()
+            
+            if one_week_count > one_day_count:
+                print("✅ GOOD: More markets are using 1-week changes than 1-day!")
+                print("   This is appropriate for 7-day (168 hour) weekly analysis.")
+                print()
+            elif one_day_count > one_week_count:
+                print("⚠️  WARNING: More markets are using 1-day price changes than 1-week!")
+                print("   This means most 'weekly' analysis is actually daily movements.")
+                print()
+            
+            # Show detailed breakdown for first 10 markets
+            print("📋 DETAILED SAMPLE (First 10 markets):")
+            print("-" * 90)
+            print(f"{'Question':<45} {'Period':<8} {'1D':<8} {'1W':<8} {'1M':<8}")
+            print("-" * 90)
+            
+            for i, analysis in enumerate(price_period_analysis[:10]):
+                question = analysis["question"][:44]
+                period = analysis["used_period"]
+                day_change = f"{analysis['1day_change']:+.3f}" if analysis['has_1day'] else "N/A"
+                week_change = f"{analysis['1week_change']:+.3f}" if analysis['has_1week'] else "N/A"  
+                month_change = f"{analysis['1month_change']:+.3f}" if analysis['has_1month'] else "N/A"
+                
+                print(f"{question:<45} {period:<8} {day_change:<8} {week_change:<8} {month_change:<8}")
+            
+            print()
+            
+            # Recommendation
+            if one_day_count > len(sample_markets) * 0.7:
+                print("🚨 CRITICAL ISSUE DETECTED!")
+                print("   70%+ of markets are using 1-day price changes instead of 1-week.")
+                print("   For a weekly newsletter analyzing 168 hours, we should prioritize")
+                print("   1-week changes over 1-day changes.")
+                print()
+                print("💡 RECOMMENDATION:")
+                print("   Modify calculate_price_changes() to prioritize:")
+                print("   1. oneWeekPriceChange (for 7-day analysis)")  
+                print("   2. oneDayPriceChange (as fallback)")
+                print("   3. oneMonthPriceChange (as last resort)")
+            else:
+                print("✅ Price change periods look reasonable for weekly analysis.")
             
     except KeyboardInterrupt:
         print("\n👋 Operation cancelled by user")

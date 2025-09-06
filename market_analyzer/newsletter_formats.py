@@ -51,7 +51,7 @@ Welcome to The Reality Index, where we decode prediction market signals to filte
 
 ### [Main Theme]: [Descriptive Name]
 
-Focus on the 1-3 most significant market shifts that support the weekly thesis.
+[Focus on the 1-3 most significant market shifts that support the weekly thesis.]
 
 #### [Subtheme if needed]
 
@@ -104,11 +104,9 @@ Focus on the 1-3 most significant market shifts that support the weekly thesis.
 
 ## Citations
 
-[1] **Polymarket - [Market Name]:** [Market URL and current odds]  
-[2] **[News Source]:** [Article title and URL explaining market movement context]  
-[3] **Polymarket - [Market Name]:** [Market URL and current odds]  
-[4] **[External Source]:** [Article/report title and URL providing background]  
-[Continue numbering alternating between Polymarket data and external context sources]
+[1] **[Source Type - Source Name]:** [Brief description with URL if external source]  
+[2] **[Source Type - Source Name]:** [Brief description with URL if external source]  
+[Continue numbering for all sources referenced - mix of Polymarket data and external sources as appropriate]
 
 CRITICAL REQUIREMENTS:
 - **Audience**: Intelligent readers who want market signal insights to cut through hype in their chosen topic areas

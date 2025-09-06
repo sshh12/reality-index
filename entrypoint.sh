@@ -26,28 +26,42 @@ echo "✅ Environment variables validated"
 echo "🗄️  Initializing database..."
 PYTHONPATH=/app python backend/database/init.py
 
-# Create supervisor log directories
-mkdir -p /var/log/supervisor
+# No longer using supervisor - processes managed directly
 
-# Start both web app and cron scheduler with supervisor
-echo "🚀 Starting both web application and cron scheduler..."
+# Display startup information
+echo "🚀 Starting The Reality Index Newsletter Service"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🌐 Web App:              http://localhost:8080"
 echo "⏰ Newsletter Scheduler:  Every Friday at 6 PM PST"
 echo "📊 Admin Stats:          http://localhost:8080/api/admin/stats"
 echo "❤️  Health Check:        http://localhost:8080/health"
-echo "📋 Supervisor Status:    supervisorctl status"
+echo "📈 Analysis Period:      7 days (168 hours) - 1-week price changes only"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Check if supervisor is available and start both processes
-if python -c "import supervisor.supervisord" 2>/dev/null; then
-    echo "🔧 Using supervisor to manage both processes"
-    exec python -m supervisor.supervisord -c /app/supervisord.conf
-else
-    echo "⚠️  Supervisor not available, starting processes individually"
-    echo "🌐 Starting web application in background..."
-    PYTHONPATH=/app python -m uvicorn backend.api:app --host 0.0.0.0 --port 8080 &
-    
-    echo "⏰ Starting cron scheduler..."
-    PYTHONPATH=/app python cron_service.py
-fi
+# Start both processes directly without supervisor
+echo "🌐 Starting web application in background..."
+PYTHONPATH=/app python -m uvicorn backend.api:app --host 0.0.0.0 --port 8080 &
+WEB_PID=$!
+
+echo "⏰ Starting cron scheduler in background..."  
+PYTHONPATH=/app python cron_service.py &
+CRON_PID=$!
+
+echo "✅ Both processes started:"
+echo "   🌐 Web app (PID: $WEB_PID)"  
+echo "   ⏰ Cron scheduler (PID: $CRON_PID)"
+
+# Function to cleanup on exit
+cleanup() {
+    echo "🛑 Shutting down processes..."
+    kill $WEB_PID $CRON_PID 2>/dev/null || true
+    wait $WEB_PID $CRON_PID 2>/dev/null || true
+    echo "👋 Shutdown complete"
+    exit 0
+}
+
+# Setup signal handlers
+trap cleanup SIGINT SIGTERM
+
+# Wait for both processes (this keeps the container running)
+wait

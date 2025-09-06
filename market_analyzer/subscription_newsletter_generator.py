@@ -24,8 +24,9 @@ class SubscriptionNewsletterGenerator:
                  min_volume: float = 10000,
                  min_change_pct: float = 2.0,
                  max_markets: int = 10000,
-                 hours_back: int = 168,  # Weekly by default
                  market_limit: Optional[int] = None):
+        # Hard-coded to 7 days (168 hours) for consistency
+        hours_back = 168
         
         self.polymarket = PolymarketClient()
         self.processor = MarketDataProcessor(min_volume, min_change_pct, max_markets)
@@ -100,7 +101,7 @@ class SubscriptionNewsletterGenerator:
         
         # Step 4: Process data for newsletter (no topic filtering - use all markets)
         print(f"📊 Processing newsletter data for topics: {topics}")
-        newsletter_data = self.processor.create_newsletter_data(markets_with_changes)
+        newsletter_data = self.processor.create_newsletter_data(markets_with_changes, self.hours_back)
         
         # Step 5: Generate newsletter content with tech-outlook format and topic context
         print(f"✍️  Generating newsletter with AI (tech-outlook format)...")
