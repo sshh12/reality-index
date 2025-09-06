@@ -318,6 +318,23 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer with GitHub Link */}
+      <div className="max-w-2xl mx-auto px-4 pb-8">
+        <div className="text-center">
+          <p className="text-sm text-gray-500">
+            Interested in the technical details? Check out the{' '}
+            <a 
+              href="https://github.com/sshh12/reality-index" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              source code on GitHub
+            </a>
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

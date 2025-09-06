@@ -63,30 +63,37 @@ const NewsletterPreviewPage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Newsletter Preview</h1>
-              <div className="flex items-center text-sm text-gray-600 mt-1">
-                <span>📅 {new Date(newsletter.sent_at).toLocaleDateString('en-US', { 
-                  weekday: 'long',
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}</span>
-                <span className="mx-2">•</span>
-                <span>📧 {newsletter.subscriber_count} subscribers</span>
-                <span className="mx-2">•</span>
-                <span>
-                  🏷️ {newsletter.topics.map(topic => 
-                    topic.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-                  ).join(' + ')}
-                </span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl font-semibold text-gray-900 mb-3">Newsletter Preview</h1>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <span>📅</span>
+                  <span>{new Date(newsletter.sent_at).toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>📧</span>
+                  <span>{newsletter.subscriber_count} subscribers</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>🏷️</span>
+                  <span>
+                    {newsletter.topics.map(topic => 
+                      topic.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                    ).join(' + ')}
+                  </span>
+                </div>
               </div>
             </div>
             <a 
               href="/" 
-              className="btn-secondary"
+              className="btn-secondary flex-shrink-0 whitespace-nowrap"
             >
               ← Back to Subscribe
             </a>
@@ -95,10 +102,10 @@ const NewsletterPreviewPage = () => {
       </div>
 
       {/* Newsletter Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div 
-            className="newsletter-content p-8"
+            className="newsletter-content p-6 sm:p-8 lg:p-12"
             dangerouslySetInnerHTML={{ __html: newsletter.content_html }}
           />
         </div>

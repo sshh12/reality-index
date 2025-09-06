@@ -34,7 +34,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Copy built frontend from the previous stage
-COPY --from=frontend-builder /app/frontend/dist ./static
+COPY --from=frontend-builder /app/static ./static
 
 # Create necessary directories
 RUN mkdir -p newsletters static

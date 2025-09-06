@@ -195,7 +195,6 @@ class SubscriptionEmailSender:
     <div class="container">
         <div class="header">
             <h1 style="margin: 0; color: #1f2937;">The Reality Index</h1>
-            <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 16px;">AI + Politics Newsletter</p>
         </div>
         {html_body}
         {unsubscribe_footer}
@@ -205,6 +204,19 @@ class SubscriptionEmailSender:
         """
         
         return html_template
+    
+    def extract_ai_title(self, newsletter_content: str) -> Optional[str]:
+        """Extract AI-generated title from newsletter markdown content"""
+        if not newsletter_content:
+            return None
+        
+        lines = newsletter_content.split('\n')
+        for line in lines:
+            line = line.strip()
+            if line.startswith('# ') and len(line) > 2:
+                return line[2:].strip()  # Remove "# " prefix
+        
+        return None
     
     def send_newsletter_to_subscribers(self, newsletter_content: str, subscribers: List[Subscription], topics: List[str]) -> Dict:
         """Send newsletter to a list of subscribers"""
@@ -217,9 +229,14 @@ class SubscriptionEmailSender:
                 "results": []
             }
         
-        # Generate subject line based on topics
-        topic_names = [get_display_name(topic) for topic in topics]
-        subject = f"The Reality Index: {' + '.join(topic_names)} Weekly Update"
+        # Try to extract AI-generated title, fallback to generic format
+        ai_title = self.extract_ai_title(newsletter_content)
+        if ai_title:
+            subject = ai_title
+        else:
+            # Fallback to generic format
+            topic_names = [get_display_name(topic) for topic in topics]
+            subject = f"The Reality Index: {' + '.join(topic_names)} Weekly Update"
         
         results = []
         successful_sends = 0
