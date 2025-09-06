@@ -7,8 +7,7 @@ import re
 from typing import List, Optional
 import os
 from fastapi import FastAPI, HTTPException, Depends, status
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, EmailStr, Field, validator
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -71,13 +70,7 @@ def validate_email(email: str) -> bool:
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
-# Mount static files immediately (before routes)
-# Mount at root level so Vite's /assets/* paths work correctly
-static_dir = "/app/static"
-if os.path.exists(static_dir):
-    app.mount("/assets", StaticFiles(directory=f"{static_dir}/assets"), name="assets")
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
-    print("✅ Static files mounted at startup")
+# Static files are now handled by nginx
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -342,24 +335,8 @@ async def get_subscription_stats(db: Session = Depends(get_database)):
             detail=f"Failed to get stats: {str(e)}"
         )
 
-# SPA route - serve index.html for all non-API routes
-@app.get("/{full_path:path}")
-async def serve_spa(full_path: str):
-    """Serve React SPA for all non-API routes"""
-    # If it's an API route that doesn't exist, return 404
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="API endpoint not found")
-    
-    # Assets and static files are handled by mounted StaticFiles above
-    # This route only handles SPA routing for the React app
-    
-    # For root or non-API paths, serve index.html
-    index_path = "/app/static/index.html"
-    if os.path.exists(index_path):
-        return FileResponse(index_path, media_type='text/html')
-    
-    # If no static files, return a basic message
-    return {"message": "Frontend not built yet", "tip": "Run the Docker build to compile the React app"}
+# SPA routing is now handled by nginx
+# This FastAPI app only handles API endpoints
 
 if __name__ == "__main__":
     import uvicorn

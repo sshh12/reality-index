@@ -20,10 +20,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies including Node.js for potential future use
+# Install system dependencies including nginx
 RUN apt-get update && apt-get install -y \
     cron \
     curl \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -35,6 +36,9 @@ COPY . .
 
 # Copy built frontend from the previous stage
 COPY --from=frontend-builder /app/static ./static
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create necessary directories
 RUN mkdir -p newsletters static

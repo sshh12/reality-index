@@ -31,31 +31,38 @@ PYTHONPATH=/app python backend/database/init.py
 # Display startup information
 echo "🚀 Starting The Reality Index Newsletter Service"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🌐 Web App:              http://localhost:8080"
+echo "🌐 Web App:              http://localhost:8080 (nginx)"
+echo "🔌 API Backend:          http://localhost:8000 (FastAPI)"  
 echo "⏰ Newsletter Scheduler:  Every Friday at 6 PM PST"
 echo "📊 Admin Stats:          http://localhost:8080/api/admin/stats"
 echo "❤️  Health Check:        http://localhost:8080/health"
 echo "📈 Analysis Period:      7 days (168 hours) - 1-week price changes only"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Start both processes directly without supervisor
-echo "🌐 Starting web application in background..."
-PYTHONPATH=/app python -m uvicorn backend.api:app --host 0.0.0.0 --port 8080 &
-WEB_PID=$!
+# Start nginx in background
+echo "🌐 Starting nginx (port 8080)..."
+nginx -g "daemon off;" &
+NGINX_PID=$!
 
-echo "⏰ Starting cron scheduler in background..."  
+# Start FastAPI backend on port 8000  
+echo "🔌 Starting FastAPI backend (port 8000)..."
+PYTHONPATH=/app python -m uvicorn backend.api:app --host 127.0.0.1 --port 8000 &
+API_PID=$!
+
+echo "⏰ Starting cron scheduler..."  
 PYTHONPATH=/app python cron_service.py &
 CRON_PID=$!
 
-echo "✅ Both processes started:"
-echo "   🌐 Web app (PID: $WEB_PID)"  
+echo "✅ All processes started:"
+echo "   🌐 Nginx (PID: $NGINX_PID)"
+echo "   🔌 FastAPI (PID: $API_PID)"  
 echo "   ⏰ Cron scheduler (PID: $CRON_PID)"
 
 # Function to cleanup on exit
 cleanup() {
-    echo "🛑 Shutting down processes..."
-    kill $WEB_PID $CRON_PID 2>/dev/null || true
-    wait $WEB_PID $CRON_PID 2>/dev/null || true
+    echo "🛑 Shutting down all processes..."
+    kill $NGINX_PID $API_PID $CRON_PID 2>/dev/null || true
+    wait $NGINX_PID $API_PID $CRON_PID 2>/dev/null || true
     echo "👋 Shutdown complete"
     exit 0
 }
@@ -63,5 +70,5 @@ cleanup() {
 # Setup signal handlers
 trap cleanup SIGINT SIGTERM
 
-# Wait for both processes (this keeps the container running)
+# Wait for all processes (this keeps the container running)
 wait
